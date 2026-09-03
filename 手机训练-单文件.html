@@ -1,0 +1,3692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f1117" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="魔方训练" />
+  <title>魔方训练 · 十字 + F2L</title>
+  <style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #242836;
+  --border: #2e3348;
+  --text: #e8eaf0;
+  --muted: #8b90a5;
+  --accent: #6c8cff;
+  --accent2: #4ecdc4;
+  --green: #4ade80;
+  --orange: #fb923c;
+  --red: #f87171;
+  --radius: 12px;
+  --nav-h: 64px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.45;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+#app {
+  min-height: 100%;
+  padding-bottom: calc(var(--nav-h) + var(--safe-b) + 12px);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+}
+.topbar h1 { font-size: 1.05rem; font-weight: 600; }
+.topbar .sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+.panel { display: none; padding: 14px 16px 24px; }
+.panel.active { display: block; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.card h2 {
+  font-size: 0.95rem;
+  color: var(--accent2);
+  margin-bottom: 8px;
+}
+.card h3 { font-size: 0.85rem; color: var(--muted); margin: 10px 0 6px; }
+.muted { color: var(--muted); font-size: 0.8rem; }
+.mono {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  letter-spacing: 0.3px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 48px;
+  width: 100%;
+}
+.btn:active { opacity: 0.85; }
+.btn:disabled { opacity: 0.4; }
+.btn-lg { min-height: 64px; font-size: 1.15rem; }
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-danger { background: var(--red); }
+.btn-green { background: #16a34a; }
+.btn-orange { background: #ea580c; }
+.btn-row { display: flex; gap: 8px; margin-top: 10px; }
+.btn-row .btn { flex: 1; }
+
+.timer {
+  font-variant-numeric: tabular-nums;
+  font-size: 3rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 12px 0;
+  color: var(--accent2);
+}
+.timer.running { color: var(--orange); }
+.hint {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  min-height: 1.4em;
+  margin-bottom: 8px;
+}
+.scramble {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 1.05rem;
+  text-align: center;
+  word-break: break-word;
+  margin-bottom: 10px;
+}
+.optimal {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 10px 0 4px;
+}
+.optimal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 4px;
+  min-height: 36px;
+  cursor: pointer;
+}
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.stat {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 6px;
+  text-align: center;
+}
+.stat .v { font-size: 1.2rem; font-weight: 700; color: var(--accent2); font-variant-numeric: tabular-nums; }
+.stat .l { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+.task {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.task:last-child { border-bottom: none; }
+.task input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  accent-color: var(--green);
+  flex-shrink: 0;
+}
+.task .body { flex: 1; min-width: 0; }
+.task .title { font-weight: 600; font-size: 0.9rem; }
+.task .detail { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.task .go {
+  flex-shrink: 0;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-height: 40px;
+}
+
+.pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--muted);
+  margin-right: 6px;
+}
+.pill.on { background: rgba(108,140,255,0.2); color: var(--accent); }
+
+.case-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.case-card .name { font-weight: 600; margin-bottom: 4px; }
+.case-card .recog { font-size: 0.8rem; color: var(--orange); margin-bottom: 8px; }
+.alg-box {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 6px 0;
+  font-size: 0.9rem;
+  color: var(--accent2);
+  word-break: break-all;
+}
+.alg-label { font-size: 0.7rem; color: var(--muted); margin-top: 6px; }
+.diagram {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
+  background: #12141c;
+  border-radius: 8px;
+  padding: 8px;
+}
+.group-head {
+  margin: 16px 0 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent2);
+}
+.btn.loading { opacity: 0.7; pointer-events: none; }
+.scramble-status { font-size: 0.75rem; margin-top: 4px; }
+
+.quiz-stats {
+  font-size: 0.85rem;
+  color: var(--accent2);
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.quiz-mode {
+  display: flex;
+  gap: 16px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.quiz-mode label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.quiz-diagram { min-height: 120px; }
+.quiz-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0;
+}
+.quiz-options button {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px 8px;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+.quiz-options button.correct { border-color: var(--green); background: rgba(74, 222, 128, 0.12); }
+.quiz-options button.wrong { border-color: var(--red); background: rgba(248, 113, 113, 0.12); }
+.quiz-options button.missed { border-color: var(--green); opacity: 0.85; }
+.quiz-result {
+  font-size: 0.85rem;
+  padding: 10px;
+  background: var(--surface2);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+.decision-details {
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+}
+.decision-details summary {
+  cursor: pointer;
+  color: var(--accent);
+  padding: 6px 0;
+}
+.decision-tree { margin-top: 8px; }
+.decision-tree .dt-q {
+  font-weight: 600;
+  color: var(--accent2);
+  margin: 8px 0 4px;
+}
+.decision-tree ul {
+  margin: 0 0 8px 1em;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.group-decision {
+  font-size: 0.72rem;
+  color: var(--orange);
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  background: rgba(251, 146, 60, 0.08);
+  border-radius: 6px;
+}
+
+
+.filter-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.filter-bar button {
+  flex-shrink: 0;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+}
+.filter-bar button.active {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.times-list {
+  font-size: 0.8rem;
+  color: var(--muted);
+  max-height: 120px;
+  overflow-y: auto;
+}
+.times-list div { padding: 4px 0; border-bottom: 1px solid var(--border); }
+.times-list strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
+.bottom-nav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: calc(var(--nav-h) + var(--safe-b));
+  padding-bottom: var(--safe-b);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  z-index: 30;
+}
+.bottom-nav button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+}
+.bottom-nav button.active { color: var(--accent); font-weight: 600; }
+.bottom-nav .ico { font-size: 1.2rem; line-height: 1; }
+
+textarea.import {
+  width: 100%;
+  min-height: 100px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 10px;
+  font-size: 0.75rem;
+  font-family: "SF Mono", Menlo, monospace;
+  margin: 8px 0;
+}
+
+.day-select {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.day-select select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal {
+  background: var(--surface);
+  border-radius: 16px 16px 0 0;
+  padding: 16px;
+  padding-bottom: calc(16px + var(--safe-b));
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal h2 { margin-bottom: 8px; }
+.hidden { display: none !important; }
+
+.observe-bar {
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+.observe-bar > i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--orange);
+  transform-origin: left;
+  transition: transform 0.1s linear;
+}
+
+</style>
+</head>
+<body>
+  <div class="card" style="margin:12px 16px 0;border-color:#4ecdc4"><p class="muted">这是<strong>单文件版</strong>，可拷到手机用浏览器直接打开。进度仍存本机。</p></div>
+  <div id="app">
+    <header class="topbar">
+      <h1>魔方训练</h1>
+      <div class="sub" id="top-sub">十字 + F2L 全套 · 数据仅存本机</div>
+    </header>
+
+    <!-- 今日 -->
+    <section class="panel active" id="panel-today">
+      <div class="card">
+        <h2>今日计划</h2>
+        <div class="day-select">
+          <label class="muted">十字阶段日</label>
+          <select id="stage-day"></select>
+          <label class="muted">F2L 日</label>
+          <select id="f2l-day"></select>
+        </div>
+        <p class="muted" id="today-labels"></p>
+        <div id="today-tasks"></div>
+      </div>
+      <div class="card">
+        <h2>快速入口</h2>
+        <div class="btn-row">
+          <button class="btn" type="button" data-nav="cross">练十字</button>
+          <button class="btn btn-outline" type="button" data-nav="f2l">F2L 图鉴</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 十字 -->
+    <section class="panel" id="panel-cross">
+      <div class="card">
+        <h2>十字单项</h2>
+        <p class="muted">打乱 → 观察 15 秒规划 → 开始计时 → 十字完成即停</p>
+        <div class="scramble mono" id="cross-scramble">—</div>
+        <div class="btn-row">
+          <button class="btn btn-outline" type="button" id="cross-new-scramble">新打乱</button>
+        </div>
+        <p class="muted scramble-status hidden" id="cross-scramble-status"></p>
+        <div class="optimal" id="cross-optimal">
+          <div class="optimal-head">
+            <span id="cross-optimal-meta">最优十字 · —</span>
+            <button type="button" class="btn-text" id="cross-optimal-toggle">显示公式</button>
+          </div>
+          <div class="alg-box mono hidden" id="cross-optimal-alg"></div>
+          <p class="muted" style="margin-top:6px">白底、当前朝向（黄顶绿前）。先自己规划，再对照。</p>
+        </div>
+        <div class="observe-bar"><i id="cross-observe-bar" style="transform:scaleX(0)"></i></div>
+        <div class="hint" id="cross-hint">可先「开始观察」规划，也可直接「开始拧」；观察不必满 15 秒</div>
+        <div class="timer" id="cross-timer">0.00</div>
+        <div class="btn-row">
+          <button class="btn btn-orange" type="button" id="cross-observe">开始观察</button>
+          <button class="btn btn-green btn-lg" type="button" id="cross-start">开始拧</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-lg" type="button" id="cross-stop" disabled>十字完成</button>
+          <button class="btn btn-outline" type="button" id="cross-reset">重置</button>
+        </div>
+        <div class="stats-row">
+          <div class="stat"><div class="v" id="cross-last">—</div><div class="l">本次</div></div>
+          <div class="stat"><div class="v" id="cross-avg">—</div><div class="l">今日平均</div></div>
+          <div class="stat"><div class="v" id="cross-count">0</div><div class="l">今日次数</div></div>
+        </div>
+        <p class="muted" style="margin-top:8px">目标线：平均 &lt; 8 秒</p>
+        <div class="times-list" id="cross-times"></div>
+      </div>
+      <div class="card" id="finger-drill">
+        <h2>手法练习</h2>
+        <p class="muted">Sexy Move 连做 20 次，保持节奏均匀，手指放松、不锁死。</p>
+        <div class="alg-box mono">R U R' U'</div>
+        <p class="hint">建议先慢做准确，再逐渐提速；20 次后回到原状。</p>
+      </div>
+    </section>
+
+    <!-- F2L -->
+    <section class="panel" id="panel-f2l">
+      <div class="card">
+        <h2>F2L 四组计时</h2>
+        <p class="muted">十字已做好后点开始，四组插完点完成</p>
+        <div class="timer" id="f2l-timer">0.00</div>
+        <div class="hint" id="f2l-hint">准备好后开始</div>
+        <div class="btn-row">
+          <button class="btn btn-green btn-lg" type="button" id="f2l-start">开始</button>
+          <button class="btn btn-lg" type="button" id="f2l-stop" disabled>四组完成</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-outline" type="button" id="f2l-reset">重置</button>
+        </div>
+        <div class="stats-row">
+          <div class="stat"><div class="v" id="f2l-last">—</div><div class="l">本次</div></div>
+          <div class="stat"><div class="v" id="f2l-avg">—</div><div class="l">今日平均</div></div>
+          <div class="stat"><div class="v" id="f2l-count">0</div><div class="l">今日次数</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>认图练习</h2>
+        <p class="muted">只看图，先选<strong>第几组</strong>，再选<strong>哪一种</strong>。练闭卷认情况。</p>
+        <div class="quiz-stats" id="quiz-stats">今日 — / 累计 —</div>
+        <div class="filter-bar" id="quiz-group-filter"></div>
+        <div class="quiz-mode">
+          <label><input type="radio" name="quiz-mode" value="group" checked /> 先认组</label>
+          <label><input type="radio" name="quiz-mode" value="case" /> 直接认情况</label>
+        </div>
+        <div class="diagram quiz-diagram" id="quiz-diagram"></div>
+        <p class="hint" id="quiz-prompt">点「下一题」开始</p>
+        <div class="quiz-options hidden" id="quiz-options"></div>
+        <div class="quiz-result hidden" id="quiz-result"></div>
+        <div class="btn-row">
+          <button class="btn btn-green" type="button" id="quiz-next">下一题</button>
+          <button class="btn btn-outline hidden" type="button" id="quiz-reveal">揭晓答案</button>
+          <button class="btn btn-outline hidden" type="button" id="quiz-practice">对着练</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>F2L 图鉴 · 组 1–12（41 例）</h2>
+        <details class="decision-details">
+          <summary>组级认图决策树（点开展开）</summary>
+          <div id="f2l-decision-tree"></div>
+        </details>
+        <p class="muted" style="margin:10px 0">
+          图是<strong>等轴测立体示意</strong>：捏着魔方<strong>右前角</strong>看——黄顶、绿前、橙右。
+          <strong>金边</strong>是当前角+棱；槽位固定 FR。识别说明格式：<strong>位置 · 连接 · 白角 · 区分点</strong>。
+          <br />立体图里<strong>前面 F 的贴纸常画在左侧</strong>，不要和左面 L 混淆。
+        </p>
+        <div class="filter-bar" id="f2l-filter"></div>
+        <div id="f2l-list"></div>
+      </div>
+    </section>
+
+    <!-- 我的 -->
+    <section class="panel" id="panel-me">
+      <div class="card">
+        <h2>本机数据</h2>
+        <p class="muted" id="me-summary">—</p>
+      </div>
+      <div class="card">
+        <h2>导出备份</h2>
+        <p class="muted">换机或清 Safari 数据前先备份。iPhone 建议用「复制」。</p>
+        <div class="btn-row">
+          <button class="btn" type="button" id="btn-export-copy">复制 JSON</button>
+          <button class="btn btn-outline" type="button" id="btn-export-file">下载文件</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>导入备份</h2>
+        <p class="muted">粘贴 JSON，或选择文件。可合并或覆盖。</p>
+        <textarea class="import" id="import-text" placeholder="在此粘贴导出的 JSON…"></textarea>
+        <input type="file" id="import-file" accept="application/json,.json,text/plain" class="muted" />
+        <div class="btn-row">
+          <button class="btn btn-outline" type="button" id="btn-import-merge">合并导入</button>
+          <button class="btn btn-danger" type="button" id="btn-import-replace">覆盖导入</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>危险操作</h2>
+        <button class="btn btn-danger" type="button" id="btn-clear">清空本机全部数据</button>
+      </div>
+      <div class="card">
+        <h2>使用提示</h2>
+        <p class="muted">
+          不想连电脑：把同目录的 <code>手机训练-单文件.html</code> 拷到手机，用 Safari/Chrome 直接打开即可。
+          多文件版可「添加到主屏幕」离线用。换机前先导出备份。
+        </p>
+      </div>
+    </section>
+
+    <nav class="bottom-nav">
+      <button type="button" class="active" data-nav="today"><span class="ico">日</span>今日</button>
+      <button type="button" data-nav="cross"><span class="ico">十</span>十字</button>
+      <button type="button" data-nav="f2l"><span class="ico">F</span>F2L</button>
+      <button type="button" data-nav="me"><span class="ico">我</span>我的</button>
+    </nav>
+  </div>
+
+  <div class="modal-backdrop hidden" id="case-modal">
+    <div class="modal">
+      <h2 id="modal-title">情况练习</h2>
+      <div class="diagram" id="modal-diagram"></div>
+      <p class="recog muted" id="modal-recog"></p>
+      <div class="alg-label">① 复现（拧到该情况）</div>
+      <div class="alg-box mono" id="modal-setup"></div>
+      <div class="alg-label">② 还原</div>
+      <div class="alg-box mono" id="modal-solve"></div>
+      <div class="alg-label" id="modal-alt-label"></div>
+      <div class="alg-box mono hidden" id="modal-alt"></div>
+      <div class="hint" id="modal-hint">先按复现公式摆出，再按还原公式插入。可开计时练速度。</div>
+      <div class="timer" id="case-timer">0.00</div>
+      <div class="btn-row">
+        <button class="btn btn-green" type="button" id="case-timer-start">计时还原</button>
+        <button class="btn" type="button" id="case-timer-stop" disabled>完成</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline" type="button" id="case-practiced">记一次练习</button>
+        <button class="btn btn-outline" type="button" id="case-close">关闭</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ===== lib/cubejs.js ===== */
+(function() {
+  // Centers
+  var B, BL, BR, Cube, D, DB, DBL, DF, DFR, DL, DLF, DR, DRB, F, FL, FR, L, R, U, UB, UBR, UF, UFL, UL, ULB, UR, URF, centerColor, centerFacelet, cornerColor, cornerFacelet, edgeColor, edgeFacelet;
+
+  [U, R, F, D, L, B] = [0, 1, 2, 3, 4, 5];
+
+  // Corners
+  [URF, UFL, ULB, UBR, DFR, DLF, DBL, DRB] = [0, 1, 2, 3, 4, 5, 6, 7];
+
+  // Edges
+  [UR, UF, UL, UB, DR, DF, DL, DB, FR, FL, BL, BR] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+  [centerFacelet, cornerFacelet, edgeFacelet] = (function() {
+    var _B, _D, _F, _L, _R, _U;
+    _U = function(x) {
+      return x - 1;
+    };
+    _R = function(x) {
+      return _U(9) + x;
+    };
+    _F = function(x) {
+      return _R(9) + x;
+    };
+    _D = function(x) {
+      return _F(9) + x;
+    };
+    _L = function(x) {
+      return _D(9) + x;
+    };
+    _B = function(x) {
+      return _L(9) + x;
+    };
+    return [
+      // Centers
+      [4,
+      13,
+      22,
+      31,
+      40,
+      49],
+      // Corners
+      [[_U(9),
+      _R(1),
+      _F(3)],
+      [_U(7),
+      _F(1),
+      _L(3)],
+      [_U(1),
+      _L(1),
+      _B(3)],
+      [_U(3),
+      _B(1),
+      _R(3)],
+      [_D(3),
+      _F(9),
+      _R(7)],
+      [_D(1),
+      _L(9),
+      _F(7)],
+      [_D(7),
+      _B(9),
+      _L(7)],
+      [_D(9),
+      _R(9),
+      _B(7)]],
+      // Edges
+      [[_U(6),
+      _R(2)],
+      [_U(8),
+      _F(2)],
+      [_U(4),
+      _L(2)],
+      [_U(2),
+      _B(2)],
+      [_D(6),
+      _R(8)],
+      [_D(2),
+      _F(8)],
+      [_D(4),
+      _L(8)],
+      [_D(8),
+      _B(8)],
+      [_F(6),
+      _R(4)],
+      [_F(4),
+      _L(6)],
+      [_B(6),
+      _L(4)],
+      [_B(4),
+      _R(6)]]
+    ];
+  })();
+
+  centerColor = ['U', 'R', 'F', 'D', 'L', 'B'];
+
+  cornerColor = [['U', 'R', 'F'], ['U', 'F', 'L'], ['U', 'L', 'B'], ['U', 'B', 'R'], ['D', 'F', 'R'], ['D', 'L', 'F'], ['D', 'B', 'L'], ['D', 'R', 'B']];
+
+  edgeColor = [['U', 'R'], ['U', 'F'], ['U', 'L'], ['U', 'B'], ['D', 'R'], ['D', 'F'], ['D', 'L'], ['D', 'B'], ['F', 'R'], ['F', 'L'], ['B', 'L'], ['B', 'R']];
+
+  Cube = (function() {
+    var faceNames, faceNums, parseAlg;
+
+    class Cube {
+      constructor(other) {
+        var x;
+        if (other != null) {
+          this.init(other);
+        } else {
+          this.identity();
+        }
+        // For moves to avoid allocating new objects each time
+        this.newCenter = (function() {
+          var k, results;
+          results = [];
+          for (x = k = 0; k <= 5; x = ++k) {
+            results.push(0);
+          }
+          return results;
+        })();
+        this.newCp = (function() {
+          var k, results;
+          results = [];
+          for (x = k = 0; k <= 7; x = ++k) {
+            results.push(0);
+          }
+          return results;
+        })();
+        this.newEp = (function() {
+          var k, results;
+          results = [];
+          for (x = k = 0; k <= 11; x = ++k) {
+            results.push(0);
+          }
+          return results;
+        })();
+        this.newCo = (function() {
+          var k, results;
+          results = [];
+          for (x = k = 0; k <= 7; x = ++k) {
+            results.push(0);
+          }
+          return results;
+        })();
+        this.newEo = (function() {
+          var k, results;
+          results = [];
+          for (x = k = 0; k <= 11; x = ++k) {
+            results.push(0);
+          }
+          return results;
+        })();
+      }
+
+      init(state) {
+        this.center = state.center.slice(0);
+        this.co = state.co.slice(0);
+        this.ep = state.ep.slice(0);
+        this.cp = state.cp.slice(0);
+        return this.eo = state.eo.slice(0);
+      }
+
+      identity() {
+        var x;
+        // Initialize to the identity cube
+        this.center = [0, 1, 2, 3, 4, 5];
+        this.cp = [0, 1, 2, 3, 4, 5, 6, 7];
+        this.co = (function() {
+          var k, results;
+          results = [];
+          for (x = k = 0; k <= 7; x = ++k) {
+            results.push(0);
+          }
+          return results;
+        })();
+        this.ep = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+        return this.eo = (function() {
+          var k, results;
+          results = [];
+          for (x = k = 0; k <= 11; x = ++k) {
+            results.push(0);
+          }
+          return results;
+        })();
+      }
+
+      toJSON() {
+        return {
+          center: this.center,
+          cp: this.cp,
+          co: this.co,
+          ep: this.ep,
+          eo: this.eo
+        };
+      }
+
+      asString() {
+        var corner, edge, i, k, l, m, n, o, ori, p, result;
+        result = [];
+        for (i = k = 0; k <= 5; i = ++k) {
+          result[9 * i + 4] = centerColor[this.center[i]];
+        }
+        for (i = l = 0; l <= 7; i = ++l) {
+          corner = this.cp[i];
+          ori = this.co[i];
+          for (n = m = 0; m <= 2; n = ++m) {
+            result[cornerFacelet[i][(n + ori) % 3]] = cornerColor[corner][n];
+          }
+        }
+        for (i = o = 0; o <= 11; i = ++o) {
+          edge = this.ep[i];
+          ori = this.eo[i];
+          for (n = p = 0; p <= 1; n = ++p) {
+            result[edgeFacelet[i][(n + ori) % 2]] = edgeColor[edge][n];
+          }
+        }
+        return result.join('');
+      }
+
+      static fromString(str) {
+        var col1, col2, cube, i, j, k, l, m, o, ori, p, q, r, ref;
+        cube = new Cube;
+        for (i = k = 0; k <= 5; i = ++k) {
+          for (j = l = 0; l <= 5; j = ++l) {
+            if (str[9 * i + 4] === centerColor[j]) {
+              cube.center[i] = j;
+            }
+          }
+        }
+        for (i = m = 0; m <= 7; i = ++m) {
+          for (ori = o = 0; o <= 2; ori = ++o) {
+            if ((ref = str[cornerFacelet[i][ori]]) === 'U' || ref === 'D') {
+              break;
+            }
+          }
+          col1 = str[cornerFacelet[i][(ori + 1) % 3]];
+          col2 = str[cornerFacelet[i][(ori + 2) % 3]];
+          for (j = p = 0; p <= 7; j = ++p) {
+            if (col1 === cornerColor[j][1] && col2 === cornerColor[j][2]) {
+              cube.cp[i] = j;
+              cube.co[i] = ori % 3;
+            }
+          }
+        }
+        for (i = q = 0; q <= 11; i = ++q) {
+          for (j = r = 0; r <= 11; j = ++r) {
+            if (str[edgeFacelet[i][0]] === edgeColor[j][0] && str[edgeFacelet[i][1]] === edgeColor[j][1]) {
+              cube.ep[i] = j;
+              cube.eo[i] = 0;
+              break;
+            }
+            if (str[edgeFacelet[i][0]] === edgeColor[j][1] && str[edgeFacelet[i][1]] === edgeColor[j][0]) {
+              cube.ep[i] = j;
+              cube.eo[i] = 1;
+              break;
+            }
+          }
+        }
+        return cube;
+      }
+
+      clone() {
+        return new Cube(this.toJSON());
+      }
+
+      // A class method returning a new random cube
+      static random() {
+        return new Cube().randomize();
+      }
+
+      isSolved() {
+        var c, cent, clone, e, k, l, m;
+        clone = this.clone();
+        clone.move(clone.upright());
+        for (cent = k = 0; k <= 5; cent = ++k) {
+          if (clone.center[cent] !== cent) {
+            return false;
+          }
+        }
+        for (c = l = 0; l <= 7; c = ++l) {
+          if (clone.cp[c] !== c) {
+            return false;
+          }
+          if (clone.co[c] !== 0) {
+            return false;
+          }
+        }
+        for (e = m = 0; m <= 11; e = ++m) {
+          if (clone.ep[e] !== e) {
+            return false;
+          }
+          if (clone.eo[e] !== 0) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      // Multiply this Cube with another Cube, restricted to centers.
+      centerMultiply(other) {
+        var from, k, to;
+        for (to = k = 0; k <= 5; to = ++k) {
+          from = other.center[to];
+          this.newCenter[to] = this.center[from];
+        }
+        [this.center, this.newCenter] = [this.newCenter, this.center];
+        return this;
+      }
+
+      // Multiply this Cube with another Cube, restricted to corners.
+      cornerMultiply(other) {
+        var from, k, to;
+        for (to = k = 0; k <= 7; to = ++k) {
+          from = other.cp[to];
+          this.newCp[to] = this.cp[from];
+          this.newCo[to] = (this.co[from] + other.co[to]) % 3;
+        }
+        [this.cp, this.newCp] = [this.newCp, this.cp];
+        [this.co, this.newCo] = [this.newCo, this.co];
+        return this;
+      }
+
+      // Multiply this Cube with another Cube, restricted to edges
+      edgeMultiply(other) {
+        var from, k, to;
+        for (to = k = 0; k <= 11; to = ++k) {
+          from = other.ep[to];
+          this.newEp[to] = this.ep[from];
+          this.newEo[to] = (this.eo[from] + other.eo[to]) % 2;
+        }
+        [this.ep, this.newEp] = [this.newEp, this.ep];
+        [this.eo, this.newEo] = [this.newEo, this.eo];
+        return this;
+      }
+
+      // Multiply this cube with another Cube
+      multiply(other) {
+        this.centerMultiply(other);
+        this.cornerMultiply(other);
+        this.edgeMultiply(other);
+        return this;
+      }
+
+      move(arg) {
+        var face, k, l, len, move, power, ref, ref1, x;
+        ref = parseAlg(arg);
+        for (k = 0, len = ref.length; k < len; k++) {
+          move = ref[k];
+          face = move / 3 | 0;
+          power = move % 3;
+          for (x = l = 0, ref1 = power; (0 <= ref1 ? l <= ref1 : l >= ref1); x = 0 <= ref1 ? ++l : --l) {
+            this.multiply(Cube.moves[face]);
+          }
+        }
+        return this;
+      }
+
+      upright() {
+        var clone, i, j, k, l, result;
+        clone = this.clone();
+        result = [];
+        for (i = k = 0; k <= 5; i = ++k) {
+          if (clone.center[i] === F) {
+            break;
+          }
+        }
+        switch (i) {
+          case D:
+            result.push("x");
+            break;
+          case U:
+            result.push("x'");
+            break;
+          case B:
+            result.push("x2");
+            break;
+          case R:
+            result.push("y");
+            break;
+          case L:
+            result.push("y'");
+        }
+        if (result.length) {
+          clone.move(result[0]);
+        }
+        for (j = l = 0; l <= 5; j = ++l) {
+          if (clone.center[j] === U) {
+            break;
+          }
+        }
+        switch (j) {
+          case L:
+            result.push("z");
+            break;
+          case R:
+            result.push("z'");
+            break;
+          case D:
+            result.push("z2");
+        }
+        return result.join(' ');
+      }
+
+      static inverse(arg) {
+        var face, k, len, move, power, result, str;
+        result = (function() {
+          var k, len, ref, results;
+          ref = parseAlg(arg);
+          results = [];
+          for (k = 0, len = ref.length; k < len; k++) {
+            move = ref[k];
+            face = move / 3 | 0;
+            power = move % 3;
+            results.push(face * 3 + -(power - 1) + 1);
+          }
+          return results;
+        })();
+        result.reverse();
+        if (typeof arg === 'string') {
+          str = '';
+          for (k = 0, len = result.length; k < len; k++) {
+            move = result[k];
+            face = move / 3 | 0;
+            power = move % 3;
+            str += faceNames[face];
+            if (power === 1) {
+              str += '2';
+            } else if (power === 2) {
+              str += "'";
+            }
+            str += ' ';
+          }
+          return str.substring(0, str.length - 1);
+        } else if (arg.length != null) {
+          return result;
+        } else {
+          return result[0];
+        }
+      }
+
+    };
+
+    Cube.prototype.randomize = (function() {
+      var arePermutationsValid, generateValidRandomOrientation, generateValidRandomPermutation, getNumSwaps, isOrientationValid, randint, randomizeOrientation, result, shuffle;
+      randint = function(min, max) {
+        return min + Math.floor(Math.random() * (max - min + 1));
+      };
+      // Fisher-Yates shuffle adapted from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+      shuffle = function(array) {
+        var currentIndex, randomIndex, temporaryValue;
+        currentIndex = array.length;
+        // While there remain elements to shuffle...
+        while (currentIndex !== 0) {
+          // Pick a remaining element...
+          randomIndex = randint(0, currentIndex - 1);
+          currentIndex -= 1;
+          // And swap it with the current element.
+          temporaryValue = array[currentIndex];
+          [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+      };
+      getNumSwaps = function(arr) {
+        var cur, cycleLength, i, k, numSwaps, ref, seen, x;
+        numSwaps = 0;
+        seen = (function() {
+          var k, ref, results;
+          results = [];
+          for (x = k = 0, ref = arr.length - 1; (0 <= ref ? k <= ref : k >= ref); x = 0 <= ref ? ++k : --k) {
+            results.push(false);
+          }
+          return results;
+        })();
+        while (true) {
+          // We compute the cycle decomposition
+          cur = -1;
+          for (i = k = 0, ref = arr.length - 1; (0 <= ref ? k <= ref : k >= ref); i = 0 <= ref ? ++k : --k) {
+            if (!seen[i]) {
+              cur = i;
+              break;
+            }
+          }
+          if (cur === -1) {
+            break;
+          }
+          cycleLength = 0;
+          while (!seen[cur]) {
+            seen[cur] = true;
+            cycleLength++;
+            cur = arr[cur];
+          }
+          // A cycle is equivalent to cycleLength + 1 swaps
+          numSwaps += cycleLength + 1;
+        }
+        return numSwaps;
+      };
+      arePermutationsValid = function(cp, ep) {
+        var numSwaps;
+        numSwaps = getNumSwaps(ep) + getNumSwaps(cp);
+        return numSwaps % 2 === 0;
+      };
+      generateValidRandomPermutation = function(cp, ep) {
+        // Each shuffle only takes around 12 operations and there's a 50%
+        // chance of a valid permutation so it'll finish in very good time
+        shuffle(ep);
+        shuffle(cp);
+        while (!arePermutationsValid(cp, ep)) {
+          shuffle(ep);
+          shuffle(cp);
+        }
+      };
+      randomizeOrientation = function(arr, numOrientations) {
+        var i, k, ori, ref;
+        ori = 0;
+        for (i = k = 0, ref = arr.length - 1; (0 <= ref ? k <= ref : k >= ref); i = 0 <= ref ? ++k : --k) {
+          ori += (arr[i] = randint(0, numOrientations - 1));
+        }
+      };
+      isOrientationValid = function(arr, numOrientations) {
+        return arr.reduce(function(a, b) {
+          return a + b;
+        }) % numOrientations === 0;
+      };
+      generateValidRandomOrientation = function(co, eo) {
+        // There is a 1/2 and 1/3 probably respectively of each of these
+        // succeeding so the probability of them running 10 times before
+        // success is already only 1% and only gets exponentially lower
+        // and each generation is only in the 10s of operations which is nothing
+        randomizeOrientation(co, 3);
+        while (!isOrientationValid(co, 3)) {
+          randomizeOrientation(co, 3);
+        }
+        randomizeOrientation(eo, 2);
+        while (!isOrientationValid(eo, 2)) {
+          randomizeOrientation(eo, 2);
+        }
+      };
+      result = function() {
+        generateValidRandomPermutation(this.cp, this.ep);
+        generateValidRandomOrientation(this.co, this.eo);
+        return this;
+      };
+      return result;
+    })();
+
+    Cube.moves = [
+      {
+        // U
+        center: [0, 1, 2, 3, 4, 5],
+        cp: [UBR,
+      URF,
+      UFL,
+      ULB,
+      DFR,
+      DLF,
+      DBL,
+      DRB],
+        co: [0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0],
+        ep: [UB,
+      UR,
+      UF,
+      UL,
+      DR,
+      DF,
+      DL,
+      DB,
+      FR,
+      FL,
+      BL,
+      BR],
+        eo: [0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0]
+      },
+      {
+        // R
+        center: [0, 1, 2, 3, 4, 5],
+        cp: [DFR,
+      UFL,
+      ULB,
+      URF,
+      DRB,
+      DLF,
+      DBL,
+      UBR],
+        co: [2,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      2],
+        ep: [FR,
+      UF,
+      UL,
+      UB,
+      BR,
+      DF,
+      DL,
+      DB,
+      DR,
+      FL,
+      BL,
+      UR],
+        eo: [0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0]
+      },
+      {
+        // F
+        center: [0, 1, 2, 3, 4, 5],
+        cp: [UFL,
+      DLF,
+      ULB,
+      UBR,
+      URF,
+      DFR,
+      DBL,
+      DRB],
+        co: [1,
+      2,
+      0,
+      0,
+      2,
+      1,
+      0,
+      0],
+        ep: [UR,
+      FL,
+      UL,
+      UB,
+      DR,
+      FR,
+      DL,
+      DB,
+      UF,
+      DF,
+      BL,
+      BR],
+        eo: [0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0]
+      },
+      {
+        // D
+        center: [0, 1, 2, 3, 4, 5],
+        cp: [URF,
+      UFL,
+      ULB,
+      UBR,
+      DLF,
+      DBL,
+      DRB,
+      DFR],
+        co: [0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0],
+        ep: [UR,
+      UF,
+      UL,
+      UB,
+      DF,
+      DL,
+      DB,
+      DR,
+      FR,
+      FL,
+      BL,
+      BR],
+        eo: [0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0]
+      },
+      {
+        // L
+        center: [0, 1, 2, 3, 4, 5],
+        cp: [URF,
+      ULB,
+      DBL,
+      UBR,
+      DFR,
+      UFL,
+      DLF,
+      DRB],
+        co: [0,
+      1,
+      2,
+      0,
+      0,
+      2,
+      1,
+      0],
+        ep: [UR,
+      UF,
+      BL,
+      UB,
+      DR,
+      DF,
+      FL,
+      DB,
+      FR,
+      UL,
+      DL,
+      BR],
+        eo: [0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0]
+      },
+      {
+        // B
+        center: [0, 1, 2, 3, 4, 5],
+        cp: [URF,
+      UFL,
+      UBR,
+      DRB,
+      DFR,
+      DLF,
+      ULB,
+      DBL],
+        co: [0,
+      0,
+      1,
+      2,
+      0,
+      0,
+      2,
+      1],
+        ep: [UR,
+      UF,
+      UL,
+      BR,
+      DR,
+      DF,
+      DL,
+      BL,
+      FR,
+      FL,
+      UB,
+      DB],
+        eo: [0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1]
+      },
+      {
+        // E
+        center: [U,
+      F,
+      L,
+      D,
+      B,
+      R],
+        cp: [URF,
+      UFL,
+      ULB,
+      UBR,
+      DFR,
+      DLF,
+      DBL,
+      DRB],
+        co: [0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0],
+        ep: [UR,
+      UF,
+      UL,
+      UB,
+      DR,
+      DF,
+      DL,
+      DB,
+      FL,
+      BL,
+      BR,
+      FR],
+        eo: [0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1]
+      },
+      {
+        // M
+        center: [B,
+      R,
+      U,
+      F,
+      L,
+      D],
+        cp: [URF,
+      UFL,
+      ULB,
+      UBR,
+      DFR,
+      DLF,
+      DBL,
+      DRB],
+        co: [0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0],
+        ep: [UR,
+      UB,
+      UL,
+      DB,
+      DR,
+      UF,
+      DL,
+      DF,
+      FR,
+      FL,
+      BL,
+      BR],
+        eo: [0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0]
+      },
+      {
+        // S
+        center: [L,
+      U,
+      F,
+      R,
+      D,
+      B],
+        cp: [URF,
+      UFL,
+      ULB,
+      UBR,
+      DFR,
+      DLF,
+      DBL,
+      DRB],
+        co: [0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0],
+        ep: [UL,
+      UF,
+      DL,
+      UB,
+      UR,
+      DF,
+      DR,
+      DB,
+      FR,
+      FL,
+      BL,
+      BR],
+        eo: [1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0]
+      }
+    ];
+
+    faceNums = {
+      U: 0,
+      R: 1,
+      F: 2,
+      D: 3,
+      L: 4,
+      B: 5,
+      E: 6,
+      M: 7,
+      S: 8,
+      x: 9,
+      y: 10,
+      z: 11,
+      u: 12,
+      r: 13,
+      f: 14,
+      d: 15,
+      l: 16,
+      b: 17
+    };
+
+    faceNames = {
+      0: 'U',
+      1: 'R',
+      2: 'F',
+      3: 'D',
+      4: 'L',
+      5: 'B',
+      6: 'E',
+      7: 'M',
+      8: 'S',
+      9: 'x',
+      10: 'y',
+      11: 'z',
+      12: 'u',
+      13: 'r',
+      14: 'f',
+      15: 'd',
+      16: 'l',
+      17: 'b'
+    };
+
+    parseAlg = function(arg) {
+      var k, len, move, part, power, ref, results;
+      if (typeof arg === 'string') {
+        ref = arg.split(/\s+/);
+        // String
+        results = [];
+        for (k = 0, len = ref.length; k < len; k++) {
+          part = ref[k];
+          if (part.length === 0) {
+            // First and last can be empty
+            continue;
+          }
+          if (part.length > 2) {
+            throw new Error(`Invalid move: ${part}`);
+          }
+          move = faceNums[part[0]];
+          if (move === void 0) {
+            throw new Error(`Invalid move: ${part}`);
+          }
+          if (part.length === 1) {
+            power = 0;
+          } else {
+            if (part[1] === '2') {
+              power = 1;
+            } else if (part[1] === "'") {
+              power = 2;
+            } else {
+              throw new Error(`Invalid move: ${part}`);
+            }
+          }
+          results.push(move * 3 + power);
+        }
+        return results;
+      } else if (arg.length != null) {
+        // Already an array
+        return arg;
+      } else {
+        // A single move
+        return [arg];
+      }
+    };
+
+    // x
+    Cube.moves.push(new Cube().move("R M' L'").toJSON());
+
+    // y
+    Cube.moves.push(new Cube().move("U E' D'").toJSON());
+
+    // z
+    Cube.moves.push(new Cube().move("F S B'").toJSON());
+
+    // u
+    Cube.moves.push(new Cube().move("U E'").toJSON());
+
+    // r
+    Cube.moves.push(new Cube().move("R M'").toJSON());
+
+    // f
+    Cube.moves.push(new Cube().move("F S").toJSON());
+
+    // d
+    Cube.moves.push(new Cube().move("D E").toJSON());
+
+    // l
+    Cube.moves.push(new Cube().move("L M").toJSON());
+
+    // b
+    Cube.moves.push(new Cube().move("B S'").toJSON());
+
+    return Cube;
+
+  }).call(this);
+
+  //# Globals
+  if (typeof module !== "undefined" && module !== null) {
+    module.exports = Cube;
+  } else {
+    this.Cube = Cube;
+  }
+
+}).call(this);
+</script>
+<script>
+/* ===== lib/cube.js ===== */
+/**
+ * Thin wrapper around vendored cubejs for algs + facelet colors.
+ * Facelet string order: URFDLB (9 each). Letters U/R/F/D/L/B map to sticker colors.
+ */
+(function (global) {
+  const FACE_TO_COLOR = { U: "Y", R: "O", F: "G", D: "W", L: "R", B: "B" };
+  const COLOR_HEX = {
+    Y: "#f5d547",
+    W: "#ececec",
+    G: "#22c55e",
+    B: "#3b82f6",
+    O: "#f97316",
+    R: "#ef4444",
+  };
+
+  function expandRepeats(alg) {
+    let s = String(alg || "")
+      .replace(/[’']/g, "'")
+      .replace(/2'/g, "2");
+    const re = /\(([^()]+)\)(\d+)/;
+    while (re.test(s)) {
+      s = s.replace(re, (_, inner, n) => Array(parseInt(n, 10)).fill(inner.trim()).join(" "));
+    }
+    return s.replace(/\s+/g, " ").trim();
+  }
+
+  function invertToken(tok) {
+    tok = tok.replace(/[’']/g, "'").replace(/2'/g, "2");
+    if (tok.endsWith("2")) return tok;
+    if (tok.endsWith("'")) return tok.slice(0, -1);
+    return tok + "'";
+  }
+
+  function invertAlg(alg) {
+    const toks = expandRepeats(alg).split(" ").filter(Boolean);
+    return toks.reverse().map(invertToken).join(" ");
+  }
+
+  function applyAlg(alg) {
+    if (typeof Cube === "undefined") throw new Error("Cubejs not loaded");
+    const c = new Cube();
+    const expanded = expandRepeats(alg);
+    if (expanded) c.move(expanded);
+    return c;
+  }
+
+  /** 54 colors Y/W/G/B/O/R in URFDLB order */
+  function faceletsFromAlg(alg) {
+    const str = applyAlg(alg).asString();
+    return str.split("").map((ch) => FACE_TO_COLOR[ch]);
+  }
+
+  function solvedFacelets() {
+    return faceletsFromAlg("");
+  }
+
+  function highlightFR(facelets) {
+    // Rebuild cubie colors via face letters on facelets — map back
+    const set = new Set();
+    // Convert colors back to face letters for matching WGO / GO
+    const toFace = { Y: "U", O: "R", G: "F", W: "D", R: "L", B: "B" };
+    const faces = facelets.map((c) => toFace[c]);
+    // cornerFacelet / edgeFacelet from cubejs (1-based helpers converted):
+    const corners = [
+      [8, 9, 20], // URF U9 R1 F3 -> 0-based 8,9,20
+      [6, 18, 38], // UFL
+      [0, 36, 47], // ULB
+      [2, 45, 11], // UBR
+      [27, 26, 15], // DFR — D3 F9 R7 = 27+2=29? Wait D1-based
+      // Use cubejs 1-based: _U(9)=8, _R(1)=9, _F(3)=20 for URF
+      // DFR: _D(3)=29? _D(x)=27+(x-1), _D(3)=29, _F(9)=26, _R(7)=15
+      [29, 26, 15],
+      [27, 44, 24], // DLF _D(1)=27 _L(9)=44 _F(7)=24
+      [33, 53, 42], // DBL
+      [35, 17, 51], // DRB
+    ];
+    // Fix ULB/UBR from cubejs:
+    // ULB: _U(1)=0, _L(1)=36, _B(3)=47
+    // UBR: _U(3)=2, _B(1)=45, _R(3)=11
+    const cornerList = [
+      [8, 9, 20],
+      [6, 18, 38],
+      [0, 36, 47],
+      [2, 45, 11],
+      [29, 26, 15],
+      [27, 44, 24],
+      [33, 53, 42],
+      [35, 17, 51],
+    ];
+    const edgeList = [
+      [5, 10], // UR _U(6)=5 _R(2)=10
+      [7, 19], // UF
+      [3, 37], // UL
+      [1, 46], // UB
+      [32, 16], // DR
+      [28, 25], // DF
+      [30, 43], // DL
+      [34, 52], // DB
+      [23, 12], // FR _F(6)=23 _R(4)=12
+      [21, 41], // FL
+      [50, 39], // BL
+      [48, 14], // BR
+    ];
+    for (const idxs of cornerList) {
+      const cols = idxs.map((i) => facelets[i]).sort().join("");
+      if (cols === "GOW") idxs.forEach((i) => set.add(i));
+    }
+    for (const idxs of edgeList) {
+      const cols = idxs.map((i) => facelets[i]).sort().join("");
+      if (cols === "GO") idxs.forEach((i) => set.add(i));
+    }
+    return set;
+  }
+
+  global.CubeEngine = {
+    COLOR_HEX,
+    FACE_TO_COLOR,
+    expandRepeats,
+    invertAlg,
+    applyAlg,
+    faceletsFromAlg,
+    solvedFacelets,
+    highlightFR,
+    /** state after setup alg from solved */
+    stateAfterSetup(setupAlg) {
+      return faceletsFromAlg(setupAlg || "");
+    },
+  };
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+/* ===== lib/cube-draw.js ===== */
+/**
+ * F2L 示意图：等轴测「立体」三面（U 顶 / F 前 / R 右），像拿着魔方右前角看。
+ * Facelets 顺序 URFDLB × 9（与 cubejs 一致）。
+ */
+(function (global) {
+  /** 等轴测投影：x 右、y 上、z 前 */
+  function iso(x, y, z, ox, oy, s) {
+    const px = ox + (x - z) * s * 0.866;
+    const py = oy - y * s + (x + z) * s * 0.5;
+    return [px, py];
+  }
+
+  function poly(pts) {
+    return pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ") + " Z";
+  }
+
+  function quad(a, b, c, d) {
+    return poly([a, b, c, d]);
+  }
+
+  /**
+   * @param {string[]} facelets 54 colors
+   * @param {Set<number>} highlight
+   */
+  function drawIso(facelets, opts = {}) {
+    const highlight = opts.highlight || new Set();
+    const hex = (global.CubeEngine && CubeEngine.COLOR_HEX) || {};
+    const s = opts.size || 26;
+    const ox = opts.ox || 150;
+    const oy = opts.oy || 175;
+    const w = opts.width || 300;
+    const h = opts.height || 260;
+
+    function sticker(faceIdx, i, corners, dim) {
+      const idx = faceIdx * 9 + i;
+      const color = hex[facelets[idx]] || "#333";
+      const isHL = highlight.has(idx);
+      const fill = dim && !isHL ? soften(color) : color;
+      const stroke = isHL ? "#fbbf24" : "#0b0d12";
+      const sw = isHL ? 2.4 : 1;
+      return `<path d="${quad(...corners)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+    }
+
+    function soften(hexColor) {
+      // slightly darken non-highlight stickers so pair pops
+      return hexColor;
+    }
+
+    let out = "";
+
+    // Draw order: U (back stickers first), then F, then R — painter's algorithm
+    // U face: y=3; row0=back(z小) col0=left(x小)
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        const i = r * 3 + c;
+        const x0 = c;
+        const z0 = r;
+        const p = [
+          iso(x0, 3, z0, ox, oy, s),
+          iso(x0 + 1, 3, z0, ox, oy, s),
+          iso(x0 + 1, 3, z0 + 1, ox, oy, s),
+          iso(x0, 3, z0 + 1, ox, oy, s),
+        ];
+        out += sticker(0, i, p, true);
+      }
+    }
+
+    // F face: z=3; row0=top(y大) col0=left(x小)
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        const i = r * 3 + c;
+        const x0 = c;
+        const y1 = 3 - r;
+        const y0 = 2 - r;
+        const p = [
+          iso(x0, y1, 3, ox, oy, s),
+          iso(x0 + 1, y1, 3, ox, oy, s),
+          iso(x0 + 1, y0, 3, ox, oy, s),
+          iso(x0, y0, 3, ox, oy, s),
+        ];
+        out += sticker(2, i, p, true);
+      }
+    }
+
+    // R face: x=3; row0=top; col0=前(F,z大) → 看 R 时左边是 F
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        const i = r * 3 + c;
+        const z1 = 3 - c;
+        const z0 = 2 - c;
+        const y1 = 3 - r;
+        const y0 = 2 - r;
+        const p = [
+          iso(3, y1, z1, ox, oy, s),
+          iso(3, y1, z0, ox, oy, s),
+          iso(3, y0, z0, ox, oy, s),
+          iso(3, y0, z1, ox, oy, s),
+        ];
+        out += sticker(1, i, p, true);
+      }
+    }
+
+    // Labels removed — cube alone is clearer on phone
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="100%" style="max-width:320px;touch-action:manipulation">`;
+    svg += `<rect width="${w}" height="${h}" fill="#12141c" rx="8"/>`;
+    svg += out;
+    svg += "</svg>";
+    return svg;
+  }
+
+  /** 旧版展开图，保留备用 */
+  function drawNet(facelets, opts = {}) {
+    const highlight = opts.highlight || new Set();
+    const hex = (global.CubeEngine && CubeEngine.COLOR_HEX) || {};
+    const cell = opts.cell || 28;
+    const gap = 2;
+    const w = cell * 6 + gap * 4;
+    const h = cell * 6 + gap * 4;
+
+    function faceGrid(faceIdx, x0, y0) {
+      let out = "";
+      for (let i = 0; i < 9; i++) {
+        const r = Math.floor(i / 3);
+        const c = i % 3;
+        const idx = faceIdx * 9 + i;
+        const color = hex[facelets[idx]] || "#333";
+        const x = x0 + c * (cell + gap);
+        const y = y0 + r * (cell + gap);
+        const isHL = highlight.has(idx);
+        const stroke = isHL ? "#fbbf24" : "#0f1117";
+        const sw = isHL ? 3 : 1;
+        out += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="3" fill="${color}" stroke="${stroke}" stroke-width="${sw}"/>`;
+      }
+      return out;
+    }
+
+    const uX = cell * 1.5 + gap;
+    const uY = gap;
+    const fX = cell * 1.5 + gap;
+    const fY = cell * 3 + gap * 3;
+    const rX = cell * 4.5 + gap * 3;
+    const rY = cell * 3 + gap * 3;
+
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="100%" style="max-width:280px">`;
+    svg += faceGrid(0, uX, uY);
+    svg += faceGrid(2, fX, fY);
+    svg += faceGrid(1, rX, rY);
+    svg += `</svg>`;
+    return svg;
+  }
+
+  function drawCase(setupAlg, opts = {}) {
+    const facelets = CubeEngine.stateAfterSetup(setupAlg);
+    const highlight = CubeEngine.highlightFR(facelets);
+    const mode = opts.mode || "iso";
+    if (mode === "net") return drawNet(facelets, { ...opts, highlight });
+    return drawIso(facelets, { ...opts, highlight });
+  }
+
+  global.CubeDraw = { drawIso, drawNet, drawCase };
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+/* ===== lib/scramble.js ===== */
+(function (global) {
+  const MOVES = ["U", "U'", "U2", "D", "D'", "D2", "R", "R'", "R2", "L", "L'", "L2", "F", "F'", "F2", "B", "B'", "B2"];
+
+  function randomScramble(len = 16) {
+    const out = [];
+    let lastFace = "";
+    while (out.length < len) {
+      const m = MOVES[Math.floor(Math.random() * MOVES.length)];
+      const face = m[0];
+      if (face === lastFace) continue;
+      out.push(m);
+      lastFace = face;
+    }
+    return out.join(" ");
+  }
+
+  global.Scramble = { randomScramble };
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+/* ===== lib/cross-solver.js ===== */
+/**
+ * White-bottom cross solver (fixed orientation: yellow U, green F).
+ * BFS on the 4 white edges; shortest face-turn solution, typically 4–8 moves.
+ */
+(function (global) {
+  const MOVES = [
+    "U", "U'", "U2", "D", "D'", "D2",
+    "R", "R'", "R2", "L", "L'", "L2",
+    "F", "F'", "F2", "B", "B'", "B2",
+  ];
+
+  // cubejs asString() URFDLB: DF/DR/DL/DB stickers (D color + side color)
+  function crossKey(cube) {
+    const s = cube.asString();
+    return s[28] + s[25] + s[32] + s[16] + s[30] + s[43] + s[34] + s[52];
+  }
+
+  const SOLVED_KEY = "DFDRDLDB";
+
+  function solveWhiteCross(scramble) {
+    if (typeof Cube === "undefined") {
+      return { ok: false, error: "Cubejs 未加载" };
+    }
+    const start = new Cube();
+    const scr = String(scramble || "").trim();
+    if (scr) start.move(scr);
+
+    if (crossKey(start) === SOLVED_KEY) {
+      return { ok: true, moves: [], alg: "（已是十字）", length: 0 };
+    }
+
+    const seen = new Set([crossKey(start)]);
+    const queue = [{ cube: start, lastFace: "", path: [] }];
+
+    for (let qi = 0; qi < queue.length; qi++) {
+      const cur = queue[qi];
+      if (cur.path.length >= 8) continue;
+
+      for (let i = 0; i < MOVES.length; i++) {
+        const m = MOVES[i];
+        const face = m[0];
+        if (face === cur.lastFace) continue;
+
+        const next = cur.cube.clone();
+        next.move(m);
+        const key = crossKey(next);
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        const path = cur.path.concat(m);
+        if (key === SOLVED_KEY) {
+          return { ok: true, moves: path, alg: path.join(" "), length: path.length };
+        }
+        queue.push({ cube: next, lastFace: face, path: path });
+      }
+    }
+
+    return { ok: false, error: "未找到 8 步内的十字" };
+  }
+
+  global.CrossSolver = { solveWhiteCross, crossKey, SOLVED_KEY };
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+/* ===== lib/storage.js ===== */
+(function (global) {
+  const KEY = "cube_mobile_trainer_v1";
+
+  function todayKey() {
+    const d = new Date();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${m}-${day}`;
+  }
+
+  function defaultData() {
+    return {
+      version: 1,
+      planChecks: {}, // { "2026-08-31": { "cross-d12-1": true } }
+      crossTimes: [], // { t, ms, date }
+      f2lTimes: [], // { t, ms, date, mode: "full"|"case", caseId? }
+      casePractice: {}, // { caseId: count }
+      recognitionQuiz: { total: 0, correct: 0, byDate: {} }, // byDate: { "2026-09-02": { total, correct } }
+      stageDay: 1, // 1-7 for cross week suggestion
+      f2lDay: 1,
+    };
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return defaultData();
+      return Object.assign(defaultData(), JSON.parse(raw));
+    } catch {
+      return defaultData();
+    }
+  }
+
+  function save(data) {
+    localStorage.setItem(KEY, JSON.stringify(data));
+  }
+
+  function exportJSON(data) {
+    return JSON.stringify(
+      {
+        exportedAt: new Date().toISOString(),
+        app: "cube-mobile-trainer",
+        ...data,
+      },
+      null,
+      2
+    );
+  }
+
+  function parseImport(text) {
+    const obj = JSON.parse(text);
+    if (!obj || typeof obj !== "object") throw new Error("无效 JSON");
+    const base = defaultData();
+    return {
+      version: 1,
+      planChecks: obj.planChecks || base.planChecks,
+      crossTimes: Array.isArray(obj.crossTimes) ? obj.crossTimes : base.crossTimes,
+      f2lTimes: Array.isArray(obj.f2lTimes) ? obj.f2lTimes : base.f2lTimes,
+      casePractice: obj.casePractice || base.casePractice,
+      recognitionQuiz: obj.recognitionQuiz || base.recognitionQuiz,
+      stageDay: obj.stageDay || 1,
+      f2lDay: obj.f2lDay || 1,
+    };
+  }
+
+  global.StorageAPI = {
+    KEY,
+    todayKey,
+    defaultData,
+    load,
+    save,
+    exportJSON,
+    parseImport,
+  };
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+/* ===== data/f2l-cases.js ===== */
+/**
+ * 魔方小站 F2L 全套 41 例（组 1–12）。槽位固定右前 FR，黄顶绿前。
+ * setupAlg = 从还原态拧到该情况；solveAlg = 还原公式。
+ * recognition = 看图特征（位置·连接·白角·棱块·组内区分）
+ */
+(function (global) {
+  const RAW = [
+    // ── 第 1 组：四种基本插入（已配对）──
+    {
+      id: "g1-1",
+      group: 1,
+      name: "已配对 · 白朝右",
+      recognition: "都在 U 层 · 相连 · 白角朝 R（右面见白）· 用右手 R U R'",
+      solveAlg: "R U R'",
+      altAlgs: [],
+    },
+    {
+      id: "g1-2",
+      group: 1,
+      name: "已配对 · 白朝前",
+      recognition: "都在 U 层 · 相连 · 白角朝 F（前面；立体图里在左侧）· 用前插 F' U' F，或转体后左手 y' R' U' R",
+      solveAlg: "F' U' F",
+      altAlgs: ["y' R' U' R"],
+    },
+    {
+      id: "g1-3",
+      group: 1,
+      name: "基本插入 · 第三式",
+      recognition: "角棱已形成一对 · 位于 FR 附近 · 用 F R' F' R 插入",
+      solveAlg: "F R' F' R",
+      altAlgs: [],
+    },
+    {
+      id: "g1-4",
+      group: 1,
+      name: "基本插入 · 第四式",
+      recognition: "角棱已形成一对 · 位于 FR 附近 · 用 U R U' R' 插入",
+      solveAlg: "U R U' R'",
+      altAlgs: [],
+    },
+
+    // ── 第 2 组：顶层分开 → 基本 1/2 ──
+    {
+      id: "g2-1",
+      group: 2,
+      name: "分开 · 角在右前上",
+      recognition: "都在 U 层 · 分开 · 角在 U 右前、棱在 U 右侧 · 白角朝侧面 · 拧成白朝前后 R U R'",
+      solveAlg: "U' R U R' U R U R'",
+      altAlgs: [],
+    },
+    {
+      id: "g2-2",
+      group: 2,
+      name: "分开 · d 藏棱再插",
+      recognition: "都在 U 层 · 分开 · 棱在 U 前、角在 U 右前 · 需 d 转中层再插",
+      solveAlg: "d R' U2 R d' R U R'",
+      altAlgs: [],
+    },
+    {
+      id: "g2-3",
+      group: 2,
+      name: "分开 · 角在右后",
+      recognition: "都在 U 层 · 分开 · 角在 U 右后、棱在 U 右 · 白朝侧面 · U' 对位后插",
+      solveAlg: "U' R U' R' U R U R'",
+      altAlgs: [],
+    },
+    {
+      id: "g2-4",
+      group: 2,
+      name: "分开 · 角在左前",
+      recognition: "都在 U 层 · 分开 · 角在 U 左前、棱在 U 前 · 镜像于 g2-3 · 可 y' 左路",
+      solveAlg: "U y' R' U' R U' R' U' R",
+      altAlgs: [],
+    },
+    {
+      id: "g2-5",
+      group: 2,
+      name: "分开 · U' 藏角",
+      recognition: "都在 U 层 · 分开 · 角在 U 右前、棱在 U 前 · 先 U' 藏角再 d 接棱",
+      solveAlg: "U' R U2 R' d R' U' R",
+      altAlgs: [],
+    },
+    {
+      id: "g2-6",
+      group: 2,
+      name: "分开 · d 左路",
+      recognition: "都在 U 层 · 分开 · 角在 U 左前、棱在 U 左 · d 起手 · 拧成白朝右类",
+      solveAlg: "d R' U R U' R' U' R",
+      altAlgs: [],
+    },
+
+    // ── 第 3 组：顶层分开 → 基本 3/4 ──
+    {
+      id: "g3-1",
+      group: 3,
+      name: "分开 · 双 U2 右",
+      recognition: "都在 U 层 · 分开 · 角在 U 右后、棱在 U 右 · 需两次 U2 对位 · 落第 3 基本式",
+      solveAlg: "U' R U2 R' U2 R U' R'",
+      altAlgs: [],
+    },
+    {
+      id: "g3-2",
+      group: 3,
+      name: "分开 · Sexy 双次",
+      recognition: "都在 U 层 · 分开 · 角在 U 右前上方、棱在 U 右 · 连做两次 R U 系",
+      solveAlg: "U' R U R' U2 R U' R'",
+      altAlgs: [],
+    },
+    {
+      id: "g3-3",
+      group: 3,
+      name: "分开 · d 双 U2 左",
+      recognition: "都在 U 层 · 分开 · 角在 U 左后、棱在 U 左 · d 起手 + 双 U2 · 镜像 g3-1",
+      solveAlg: "d R' U2 R U2 R' U R",
+      altAlgs: [],
+    },
+    {
+      id: "g3-4",
+      group: 3,
+      name: "分开 · d 落第 4 式",
+      recognition: "都在 U 层 · 分开 · 角在 U 左前、棱在 U 左 · d 起手 · 落第 4 基本式",
+      solveAlg: "d R' U' R U2 R' U R",
+      altAlgs: [],
+    },
+
+    // ── 第 4 组：白朝上且分开 ──
+    {
+      id: "g4-1",
+      group: 4,
+      name: "白朝上分开 · 角右前",
+      recognition: "都在 U 层 · 分开 · 白角朝 U · 角在 U 右前、棱在 U 右 · y' 左路",
+      solveAlg: "y' U' R' U2 R U' R' U R",
+      altAlgs: [],
+    },
+    {
+      id: "g4-2",
+      group: 4,
+      name: "白朝上分开 · 角右后",
+      recognition: "都在 U 层 · 分开 · 白角朝 U · 角在 U 右后、棱在 U 右 · U R U2 R' 系",
+      solveAlg: "U R U2 R' U R U' R'",
+      altAlgs: [],
+    },
+    {
+      id: "g4-3",
+      group: 4,
+      name: "白朝上分开 · 角左后",
+      recognition: "都在 U 层 · 分开 · 白角朝 U · 角在 U 左后、棱在 U 左 · U2 起手",
+      solveAlg: "U2 R U R' U R U' R'",
+      altAlgs: [],
+    },
+    {
+      id: "g4-4",
+      group: 4,
+      name: "白朝上分开 · 角左前",
+      recognition: "都在 U 层 · 分开 · 白角朝 U · 角在 U 左前、棱在 U 左 · y' U2 左路",
+      solveAlg: "y' U2 R' U' R U' R' U R",
+      altAlgs: [],
+    },
+
+    // ── 第 5 组：交叉 ──
+    {
+      id: "g5-1",
+      group: 5,
+      name: "交叉 · 角右前棱左前",
+      recognition: "都在 U 层 · 交叉相对 · 角在 U 右前、棱在 U 左前 · 先 R 系再 F' U F",
+      solveAlg: "U R U' R' U' F' U F",
+      altAlgs: [],
+    },
+    {
+      id: "g5-2",
+      group: 5,
+      name: "交叉 · 角左前棱右前",
+      recognition: "都在 U 层 · 交叉相对 · 角在 U 左前、棱在 U 右前 · 镜像 g5-1",
+      solveAlg: "U' F' U F U R U' R'",
+      altAlgs: [],
+    },
+
+    // ── 第 6 组：棱在中层、角在顶白朝侧 ──
+    {
+      id: "g6-1",
+      group: 6,
+      name: "中层棱 · 角右前异色",
+      recognition: "棱在 E 层（中层）· 角在 U 右前 · 白角朝侧面 · 角棱侧面异色 · d 藏角",
+      solveAlg: "d R' U' R d' R U R'",
+      altAlgs: [],
+    },
+    {
+      id: "g6-2",
+      group: 6,
+      name: "中层棱 · 角右后异色",
+      recognition: "棱在 E 层 · 角在 U 右后 · 白角朝侧面 · 角棱侧面异色 · U' 起手",
+      solveAlg: "U' R U R' d R' U' R",
+      altAlgs: [],
+    },
+    {
+      id: "g6-3",
+      group: 6,
+      name: "中层棱 · 角右前同色",
+      recognition: "棱在 E 层 · 角在 U 右前 · 白角朝侧面 · 角棱侧面同色 · U' R U2 R'",
+      solveAlg: "U' R U2 R' U R U R'",
+      altAlgs: [],
+    },
+    {
+      id: "g6-4",
+      group: 6,
+      name: "中层棱 · 角右后同色",
+      recognition: "棱在 E 层 · 角在 U 右后 · 白角朝侧面 · 角棱侧面同色 · U' R U' R' U2",
+      solveAlg: "U' R U' R' U2 R U' R'",
+      altAlgs: [],
+    },
+
+    // ── 第 7 组：藏棱 180° ──
+    {
+      id: "g7-1",
+      group: 7,
+      name: "藏棱 180° · 右路",
+      recognition: "角在 U · 棱在 E 层 FR 位 · 角要越过棱头顶 180° · R U2 R' 起手",
+      solveAlg: "R U2 R' U' R U R'",
+      altAlgs: [],
+    },
+    {
+      id: "g7-2",
+      group: 7,
+      name: "藏棱 180° · 左路",
+      recognition: "角在 U · 棱在 E 层 FL 位 · 越过棱头顶 180° · y' 镜像 g7-1",
+      solveAlg: "y' R' U2 R U R' U' R",
+      altAlgs: [],
+    },
+
+    // ── 第 8 组：藏棱 90° ──
+    {
+      id: "g8-1",
+      group: 8,
+      name: "藏棱 90° · 右路",
+      recognition: "角在 U · 棱在 E 层 · 越过棱头顶 90°（不是 180°）· R U' R' U d",
+      solveAlg: "R U' R' U d R' U' R",
+      altAlgs: [],
+    },
+    {
+      id: "g8-2",
+      group: 8,
+      name: "藏棱 90° · 左路",
+      recognition: "角在 U · 棱在 E 层 · 越过棱头顶 90° · y' 镜像 g8-1",
+      solveAlg: "y' R' U R U' d' R U R'",
+      altAlgs: [],
+    },
+
+    // ── 第 9 组：一上一下、白朝上 ──
+    {
+      id: "g9-1",
+      group: 9,
+      name: "上角下棱 · 白朝上",
+      recognition: "角在 U · 棱在 D 层（下方）· 白角朝 U · 角在上棱在下",
+      solveAlg: "R U' R' d R' U R",
+      altAlgs: [],
+    },
+    {
+      id: "g9-2",
+      group: 9,
+      name: "上角下棱 · 白朝上长式",
+      recognition: "角在 U · 棱在 D 层 · 白角朝 U · 与 g9-1 同类 · 三次 R U R' U'",
+      solveAlg: "R U R' U' R U R' U' R U R'",
+      altAlgs: [],
+    },
+
+    // ── 第 10 组：角在底层、棱在顶 ──
+    {
+      id: "g10-1",
+      group: 10,
+      name: "下角上棱 · 同色",
+      recognition: "角在 D 层 FR 位 · 棱在 U · 白角朝侧面 · 底角可见色与顶棱同色",
+      solveAlg: "R U' R' U R U' R'",
+      altAlgs: [],
+    },
+    {
+      id: "g10-2",
+      group: 10,
+      name: "下角上棱 · 同色左路",
+      recognition: "角在 D 层 FL 位 · 棱在 U · 白角朝侧面 · 底角与顶棱同色 · y' 路",
+      solveAlg: "y' R' U R U' R' U R",
+      altAlgs: [],
+    },
+    {
+      id: "g10-3",
+      group: 10,
+      name: "下角上棱 · 异色",
+      recognition: "角在 D 层 FR 位 · 棱在 U · 白角朝侧面 · 底角可见色与顶棱异色",
+      solveAlg: "R U R' U' R U R'",
+      altAlgs: [],
+    },
+    {
+      id: "g10-4",
+      group: 10,
+      name: "下角上棱 · 异色左路",
+      recognition: "角在 D 层 FL 位 · 棱在 U · 白角朝侧面 · 底角与顶棱异色 · y 路",
+      solveAlg: "y L' U' L U L' U' L",
+      altAlgs: ["y' R' U' R U R' U' R"],
+    },
+
+    // ── 第 11 组：白朝上且相连 ──
+    {
+      id: "g11-1",
+      group: 11,
+      name: "白朝上相连 · 标准",
+      recognition: "都在 U 层 · 相连（不是分开！）· 白角朝 U · 侧面同色 · 与第 4 组区别：4 组是分开",
+      solveAlg: "R U R' d R' U R U' R' U R",
+      altAlgs: [],
+    },
+    {
+      id: "g11-2",
+      group: 11,
+      name: "白朝上相连 · U2 路",
+      recognition: "都在 U 层 · 相连 · 白角朝 U · 侧面同色 · 角棱在 U 呈「横条」· U2 R2 系",
+      solveAlg: "U2 R2 U2 R' U' R U' R2",
+      altAlgs: [],
+    },
+
+    // ── 第 12 组：已在槽位但错向 ──
+    {
+      id: "g12-1",
+      group: 12,
+      name: "错槽 · 角反棱正",
+      recognition: "都在下两层 · 已在 FR 槽位 · 角块反插/方向错 · 需 R U' R' U R U2 R'",
+      solveAlg: "R U' R' U R U2 R' U R U' R'",
+      altAlgs: [],
+    },
+    {
+      id: "g12-2",
+      group: 12,
+      name: "错槽 · 藏棱取出",
+      recognition: "都在下两层 · 已在 FR 槽位 · 棱块方向错 · d 藏棱再取出重插",
+      solveAlg: "R U' R' U d R' U' R U' R' U R",
+      altAlgs: [],
+    },
+    {
+      id: "g12-3",
+      group: 12,
+      name: "错槽 · 双 U'",
+      recognition: "都在下两层 · 已在 FR 槽位 · 角棱都错 · R U' R' U' R U R' U2",
+      solveAlg: "R U' R' U' R U R' U2 R U' R'",
+      altAlgs: [],
+    },
+    {
+      id: "g12-4",
+      group: 12,
+      name: "错槽 · F 取出",
+      recognition: "都在下两层 · 已在 FR 槽位 · 需 F' U' F 取出再插",
+      solveAlg: "R U' R' U' R U' R' U F' U' F",
+      altAlgs: [],
+    },
+    {
+      id: "g12-5",
+      group: 12,
+      name: "错槽 · 双 U2 取出",
+      recognition: "都在下两层 · 已在 FR 槽位 · 角棱深插 · (R U' U' R' U)2 取出",
+      solveAlg: "(R U' U' R' U)2 y' R' U' R",
+      altAlgs: [],
+    },
+  ];
+
+  const GROUP_META = {
+    1: {
+      title: "第 1 组 · 四种基本插入",
+      blurb: "都在顶层且已配对。看白角朝 F / R / 里 / U 四向。",
+      decision: "顶层 · 相连 · 白角朝侧面或朝里（不是白朝上分开）",
+    },
+    2: {
+      title: "第 2 组 · 转基本 1/2",
+      blurb: "顶层分开，拧完后变成「白朝前/右」再插。",
+      decision: "顶层 · 分开 · 目标落第 1/2 种配对（白朝 F 或 R）",
+    },
+    3: {
+      title: "第 3 组 · 转基本 3/4",
+      blurb: "顶层分开，拧完后变成「白朝里/上」再插。",
+      decision: "顶层 · 分开 · 目标落第 3/4 种配对（白朝里或 U）",
+    },
+    4: {
+      title: "第 4 组 · 白朝上分开",
+      blurb: "角白朝天、两块分开。与第 11 组区别：11 组是相连。",
+      decision: "顶层 · 分开 · 白角朝 U（顶面见白）",
+    },
+    5: {
+      title: "第 5 组 · 交叉",
+      blurb: "两块在顶呈对角/交叉相对，不是并排。",
+      decision: "顶层 · 交叉相对（角在一角、棱在对角位置）",
+    },
+    6: {
+      title: "第 6 组 · 棱在中层",
+      blurb: "棱卡在 E 层，角在顶层白朝侧面。",
+      decision: "棱在中层 E · 角在 U · 白角朝侧面",
+    },
+    7: {
+      title: "第 7 组 · 藏棱 180°",
+      blurb: "角在顶、棱在中层，角越过棱头顶转 180°。",
+      decision: "角 U + 棱 E · 藏棱时角转 180°",
+    },
+    8: {
+      title: "第 8 组 · 藏棱 90°",
+      blurb: "同类但只转 90°，与第 7 组手感不同。",
+      decision: "角 U + 棱 E · 藏棱时角只转 90°",
+    },
+    9: {
+      title: "第 9 组 · 上角下棱",
+      blurb: "角在顶、棱在底层，白角朝上。",
+      decision: "角在 U · 棱在 D · 白角朝 U",
+    },
+    10: {
+      title: "第 10 组 · 下角上棱",
+      blurb: "角在底层、棱在顶，白角朝侧面。",
+      decision: "角在 D · 棱在 U · 白角朝侧面",
+    },
+    11: {
+      title: "第 11 组 · 白朝上相连",
+      blurb: "角白朝天且与棱相连。与第 4 组关键区别：4 分开、11 相连。",
+      decision: "顶层 · 相连 · 白角朝 U（第 4 组是分开）",
+    },
+    12: {
+      title: "第 12 组 · 错槽",
+      blurb: "角棱已在 FR 槽但方向/位置错误，要先取出。",
+      decision: "都在下两层 · 已在目标槽 FR · 未正确插入",
+    },
+  };
+
+  /** 组级认图决策树（显示在图鉴顶部） */
+  const DECISION_TREE = [
+    { q: "两块大致在哪？", a: [
+      "都在顶层 U → 看是否相连",
+      "一块在中层 E → 第 6 / 7 / 8 组",
+      "角 U + 棱 D → 第 9 组",
+      "角 D + 棱 U → 第 10 组",
+      "都在下两层槽里 → 第 12 组",
+    ]},
+    { q: "都在顶层：相连还是分开？", a: [
+      "相连 + 白朝 U → 第 11 组（第 4 组是分开）",
+      "相连 + 白朝 F/R/里 → 第 1 组",
+      "分开 + 白朝 U → 第 4 组",
+      "分开 + 交叉相对 → 第 5 组",
+      "分开 + 白朝侧面 → 第 2 或 3 组（想落哪类基本插入）",
+    ]},
+    { q: "中层棱：转多少度藏棱？", a: [
+      "越过棱头顶 180° → 第 7 组",
+      "越过棱头顶 90° → 第 8 组",
+      "棱在 E、角在 U 白朝侧（常规取法）→ 第 6 组",
+    ]},
+  ];
+
+  function withSetup(cases) {
+    return cases.map((c) => ({
+      ...c,
+      setupAlg: c.setupAlg != null ? c.setupAlg : CubeEngine.invertAlg(c.solveAlg),
+    }));
+  }
+
+  function byGroup(cases) {
+    const map = {};
+    for (const c of cases) {
+      if (!map[c.group]) map[c.group] = [];
+      map[c.group].push(c);
+    }
+    return map;
+  }
+
+  function getGroupNumbers() {
+    return Object.keys(GROUP_META)
+      .map(Number)
+      .sort((a, b) => a - b);
+  }
+
+  global.F2LData = {
+    RAW,
+    GROUP_META,
+    DECISION_TREE,
+    getGroupNumbers,
+    getCases() {
+      return withSetup(RAW);
+    },
+    byGroup() {
+      return byGroup(withSetup(RAW));
+    },
+    getById(id) {
+      return withSetup(RAW).find((c) => c.id === id);
+    },
+    getByGroup(g) {
+      return withSetup(RAW).filter((c) => c.group === g);
+    },
+  };
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+/* ===== data/plans.js ===== */
+/**
+ * 今日计划模板：十字周 (Day1–7) + F2L 组 1–12 专项（14 天循环）。
+ */
+(function (global) {
+  const CROSS_DAYS = {
+    "1-2": {
+      label: "Day 1–2 · 观察与规划",
+      tasks: [
+        { id: "cross-observe", title: "十字单项 10 分钟", detail: "打乱 → 观察 15 秒 → 只做十字。观察时至少计划 2 条白棱", go: "cross" },
+        { id: "cross-finger", title: "手法 5 分钟", detail: "Sexy R U R' U' 连做 20 次，要求不锁死", go: "finger" },
+      ],
+    },
+    "3-4": {
+      label: "Day 3–4 · 减少转体",
+      tasks: [
+        { id: "cross-y2", title: "十字单项（转体 ≤ 2）", detail: "每次 y/y' 心里计数，目标大多数 ≤ 2 次", go: "cross" },
+        { id: "cross-sexy", title: "Sexy 连做", detail: "R U R' U' × 20，节奏均匀", go: "finger" },
+      ],
+    },
+    "5-6": {
+      label: "Day 5–6 · 提速与衔接",
+      tasks: [
+        { id: "cross-speed", title: "十字单项目标 < 10 秒", detail: "做完十字立刻找下一组块，不发呆", go: "cross" },
+        { id: "cross-link", title: "衔接意识", detail: "十字最后一步时眼睛已在找第一组 F2L", go: "cross" },
+      ],
+    },
+    "7": {
+      label: "Day 7 · 阶段测试",
+      tasks: [
+        { id: "cross-test10", title: "连续 10 次十字，平均 < 8 秒", detail: "用本页计时，看今日平均", go: "cross" },
+        { id: "cross-y01", title: "至少 5 次转体 0–1 次", detail: "自己心里记转体次数", go: "cross" },
+      ],
+    },
+  };
+
+  const F2L_FOCUS = [
+    { day: 1, groups: [1], title: "F2L：第 1 组四种基本插入" },
+    { day: 2, groups: [1, 2], title: "F2L：第 1 组复习 + 第 2 组" },
+    { day: 3, groups: [2, 3], title: "F2L：第 2–3 组（顶层分开）" },
+    { day: 4, groups: [4], title: "F2L：第 4 组白朝上分开" },
+    { day: 5, groups: [5, 4], title: "F2L：第 5 组交叉 + 复习第 4" },
+    { day: 6, groups: [11], title: "F2L：第 11 组白朝上相连" },
+    { day: 7, groups: [6], title: "F2L：第 6 组棱在中层" },
+    { day: 8, groups: [7, 8], title: "F2L：第 7–8 组藏棱" },
+    { day: 9, groups: [9, 10], title: "F2L：第 9–10 组上下分布" },
+    { day: 10, groups: [12], title: "F2L：第 12 组错槽" },
+    { day: 11, groups: [1, 2, 3, 4, 5], title: "F2L：组 1–5 混合认图" },
+    { day: 12, groups: [6, 7, 8, 9, 10, 11, 12], title: "F2L：组 6–12 混合认图" },
+    { day: 13, groups: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], title: "F2L：全组混合认图" },
+    { day: 14, groups: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], title: "F2L：四组计时 + 弱项复练" },
+  ];
+
+  function crossBucket(day) {
+    if (day <= 2) return "1-2";
+    if (day <= 4) return "3-4";
+    if (day <= 6) return "5-6";
+    return "7";
+  }
+
+  function buildToday(stageDay, f2lDay) {
+    const bucket = crossBucket(stageDay);
+    const cross = CROSS_DAYS[bucket];
+    const f2l = F2L_FOCUS[(f2lDay - 1) % F2L_FOCUS.length];
+    const tasks = [
+      ...cross.tasks.map((t) => ({ ...t, section: "十字" })),
+      {
+        id: `f2l-focus-${f2l.day}`,
+        title: f2l.title,
+        detail: `练组 ${f2l.groups.join("、")}：先用「认图练习」闭卷认组，再对着练`,
+        go: "f2l",
+        section: "F2L",
+        groups: f2l.groups,
+        scrollQuiz: true,
+      },
+      {
+        id: `f2l-quiz-${f2l.day}`,
+        title: "认图练习 10 题",
+        detail: "随机出图 → 先选第几组 → 揭晓后再选具体哪一种",
+        go: "f2l-quiz",
+        section: "F2L",
+        groups: f2l.groups,
+      },
+      {
+        id: `f2l-timer-${f2l.day}`,
+        title: "F2L 四组单项计时 1 次",
+        detail: "十字做好后开始计时，四组插完停下（慢没关系）",
+        go: "f2l-timer",
+        section: "F2L",
+      },
+    ];
+    return {
+      crossLabel: cross.label,
+      f2lLabel: f2l.title,
+      tasks,
+      focusGroups: f2l.groups,
+    };
+  }
+
+  global.PlanData = {
+    CROSS_DAYS,
+    F2L_FOCUS,
+    crossBucket,
+    buildToday,
+  };
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+/* ===== app.js ===== */
+(function () {
+  let data = StorageAPI.load();
+  const today = () => StorageAPI.todayKey();
+
+  function persist() {
+    StorageAPI.save(data);
+  }
+
+  function fmt(ms) {
+    return (ms / 1000).toFixed(2);
+  }
+
+  function avg(list) {
+    if (!list.length) return null;
+    return list.reduce((a, b) => a + b, 0) / list.length;
+  }
+
+  // ── Navigation ──
+  function showPanel(name) {
+    document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+    document.querySelectorAll(".bottom-nav button").forEach((b) => b.classList.remove("active"));
+    const panel = document.getElementById("panel-" + name);
+    if (panel) panel.classList.add("active");
+    const nav = document.querySelector(`.bottom-nav button[data-nav="${name}"]`);
+    if (nav) nav.classList.add("active");
+    if (name === "today") renderToday();
+    if (name === "cross") renderCrossStats();
+    if (name === "f2l") {
+      renderF2lStats();
+      renderF2lFilter();
+      renderDecisionTree();
+      renderQuizFilter();
+      renderQuizStats();
+      renderF2lList(currentGroupFilter);
+    }
+    if (name === "me") renderMe();
+  }
+
+  document.querySelectorAll("[data-nav]").forEach((el) => {
+    el.addEventListener("click", () => showPanel(el.getAttribute("data-nav")));
+  });
+
+  // ── Today / Plans ──
+  function initDaySelects() {
+    const sd = document.getElementById("stage-day");
+    const fd = document.getElementById("f2l-day");
+    sd.innerHTML = "";
+    fd.innerHTML = "";
+    for (let i = 1; i <= 7; i++) {
+      sd.innerHTML += `<option value="${i}">Day ${i}</option>`;
+    }
+    for (let i = 1; i <= 14; i++) {
+      fd.innerHTML += `<option value="${i}">Day ${i}</option>`;
+    }
+    sd.value = String(data.stageDay || 1);
+    fd.value = String(data.f2lDay || 1);
+    sd.addEventListener("change", () => {
+      data.stageDay = parseInt(sd.value, 10);
+      persist();
+      renderToday();
+    });
+    fd.addEventListener("change", () => {
+      data.f2lDay = parseInt(fd.value, 10);
+      persist();
+      renderToday();
+    });
+  }
+
+  function renderToday() {
+    const plan = PlanData.buildToday(data.stageDay || 1, data.f2lDay || 1);
+    document.getElementById("today-labels").textContent =
+      plan.crossLabel + " ｜ " + plan.f2lLabel;
+    const checks = data.planChecks[today()] || {};
+    const root = document.getElementById("today-tasks");
+    root.innerHTML = plan.tasks
+      .map((t) => {
+        const checked = !!checks[t.id];
+        return `<div class="task">
+          <input type="checkbox" data-task="${t.id}" ${checked ? "checked" : ""} />
+          <div class="body">
+            <div><span class="pill">${t.section}</span><span class="title">${t.title}</span></div>
+            <div class="detail">${t.detail}</div>
+          </div>
+          <button type="button" class="go" data-go="${t.go}" data-groups="${(t.groups || []).join(",")}" ${t.scrollQuiz ? 'data-scroll-quiz="1"' : ""}>去练</button>
+        </div>`;
+      })
+      .join("");
+
+    root.querySelectorAll("input[data-task]").forEach((inp) => {
+      inp.addEventListener("change", () => {
+        if (!data.planChecks[today()]) data.planChecks[today()] = {};
+        data.planChecks[today()][inp.getAttribute("data-task")] = inp.checked;
+        persist();
+      });
+    });
+    root.querySelectorAll("[data-go]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const go = btn.getAttribute("data-go");
+        if (go === "finger") {
+          showPanel("cross");
+          requestAnimationFrame(() => {
+            document.getElementById("finger-drill").scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          });
+        } else if (go === "f2l" || go === "f2l-timer" || go === "f2l-quiz") {
+          const g = btn.getAttribute("data-groups");
+          if (g) {
+            const gs = g.split(",").map((x) => parseInt(x, 10)).filter(Boolean);
+            if (gs.length) {
+              currentGroupFilter = gs.length === 1 ? gs[0] : "all";
+              quizGroupFilter = gs;
+            }
+          }
+          showPanel("f2l");
+          if (go === "f2l-timer") {
+            document.getElementById("f2l-start").scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+          if (go === "f2l-quiz" || btn.hasAttribute("data-scroll-quiz")) {
+            document.getElementById("quiz-next").scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        } else {
+          showPanel(go);
+        }
+      });
+    });
+  }
+
+  // ── Cross timer ──
+  let crossState = "idle"; // idle | observe | ready | running
+  let crossObserveEnds = 0;
+  let crossObserveRaf = null;
+  let crossStart = 0;
+  let crossRaf = null;
+
+  function setCrossHint(text) {
+    document.getElementById("cross-hint").textContent = text;
+  }
+
+  let crossOptimalAlg = "";
+  let crossOptimalShown = false;
+
+  function hideOptimalAlg() {
+    crossOptimalShown = false;
+    document.getElementById("cross-optimal-alg").classList.add("hidden");
+    document.getElementById("cross-optimal-toggle").textContent = "显示公式";
+  }
+
+  let crossScrambleBusy = false;
+
+  function setCrossScrambleLoading(loading) {
+    const btn = document.getElementById("cross-new-scramble");
+    const status = document.getElementById("cross-scramble-status");
+    crossScrambleBusy = loading;
+    btn.disabled = loading;
+    btn.classList.toggle("loading", loading);
+    btn.textContent = loading ? "生成中…" : "新打乱";
+    status.classList.toggle("hidden", !loading);
+    status.textContent = loading ? "正在生成打乱并计算最优十字…" : "";
+  }
+
+  function updateOptimalCross(scramble) {
+    hideOptimalAlg();
+    const meta = document.getElementById("cross-optimal-meta");
+    const box = document.getElementById("cross-optimal-alg");
+    try {
+      const sol = CrossSolver.solveWhiteCross(scramble);
+      if (!sol.ok) {
+        crossOptimalAlg = "";
+        meta.textContent = "最优十字 · 未求出";
+        box.textContent = sol.error || "";
+        return;
+      }
+      crossOptimalAlg = sol.alg;
+      meta.textContent = sol.length === 0 ? "最优十字 · 已是十字" : `最优十字 · ${sol.length} 步`;
+      box.textContent = sol.alg;
+    } catch (e) {
+      crossOptimalAlg = "";
+      meta.textContent = "最优十字 · 出错";
+      box.textContent = e.message;
+    }
+  }
+
+  function newCrossScramble() {
+    if (crossScrambleBusy) return;
+    setCrossScrambleLoading(true);
+    document.getElementById("cross-scramble").textContent = "…";
+    document.getElementById("cross-optimal-meta").textContent = "最优十字 · 计算中…";
+
+    const scr = Scramble.randomScramble(16);
+    document.getElementById("cross-scramble").textContent = scr;
+    crossReset(false);
+
+    setTimeout(() => {
+      updateOptimalCross(scr);
+      setCrossScrambleLoading(false);
+    }, 16);
+  }
+
+  function crossReset(keepScramble) {
+    crossState = "idle";
+    cancelAnimationFrame(crossObserveRaf);
+    cancelAnimationFrame(crossRaf);
+    document.getElementById("cross-timer").textContent = "0.00";
+    document.getElementById("cross-timer").classList.remove("running");
+    document.getElementById("cross-observe-bar").style.transform = "scaleX(0)";
+    document.getElementById("cross-start").disabled = false;
+    document.getElementById("cross-stop").disabled = true;
+    document.getElementById("cross-observe").disabled = false;
+    setCrossHint("可先「开始观察」规划，也可直接点「开始拧」（观察不必满 15 秒）");
+    if (!keepScramble) {
+      /* scramble kept by caller */
+    }
+  }
+
+  function tickObserve() {
+    const left = Math.max(0, crossObserveEnds - Date.now());
+    const p = 1 - left / 15000;
+    document.getElementById("cross-observe-bar").style.transform = `scaleX(${p})`;
+    if (crossState === "observe") {
+      setCrossHint(`观察中… 剩余 ${(left / 1000).toFixed(1)}s · 随时可点「开始拧」`);
+    }
+    if (left <= 0) {
+      if (crossState === "observe") {
+        crossState = "ready";
+        setCrossHint("观察时间到 → 点「开始拧」");
+      }
+      return;
+    }
+    crossObserveRaf = requestAnimationFrame(tickObserve);
+  }
+
+  function tickCross() {
+    const ms = Date.now() - crossStart;
+    document.getElementById("cross-timer").textContent = fmt(ms);
+    crossRaf = requestAnimationFrame(tickCross);
+  }
+
+  document.getElementById("cross-optimal-toggle").addEventListener("click", () => {
+    if (!crossOptimalAlg) return;
+    crossOptimalShown = !crossOptimalShown;
+    document.getElementById("cross-optimal-alg").classList.toggle("hidden", !crossOptimalShown);
+    document.getElementById("cross-optimal-toggle").textContent = crossOptimalShown ? "隐藏公式" : "显示公式";
+  });
+  document.getElementById("cross-new-scramble").addEventListener("click", newCrossScramble);
+  document.getElementById("cross-reset").addEventListener("click", () => crossReset(true));
+  document.getElementById("cross-observe").addEventListener("click", () => {
+    crossState = "observe";
+    crossObserveEnds = Date.now() + 15000;
+    document.getElementById("cross-observe").disabled = true;
+    document.getElementById("cross-start").disabled = false;
+    tickObserve();
+  });
+  document.getElementById("cross-start").addEventListener("click", () => {
+    if (crossState === "running") return;
+    cancelAnimationFrame(crossObserveRaf);
+    crossState = "running";
+    crossStart = Date.now();
+    document.getElementById("cross-timer").classList.add("running");
+    document.getElementById("cross-start").disabled = true;
+    document.getElementById("cross-stop").disabled = false;
+    document.getElementById("cross-observe").disabled = true;
+    setCrossHint("拧十字中… 完成后点「十字完成」");
+    tickCross();
+  });
+  document.getElementById("cross-stop").addEventListener("click", () => {
+    if (crossState !== "running") return;
+    cancelAnimationFrame(crossRaf);
+    const ms = Date.now() - crossStart;
+    data.crossTimes.push({ t: Date.now(), ms, date: today() });
+    persist();
+    crossState = "idle";
+    document.getElementById("cross-timer").classList.remove("running");
+    document.getElementById("cross-stop").disabled = true;
+    document.getElementById("cross-observe").disabled = false;
+    setCrossHint(`完成 ${fmt(ms)}s · 可点「新打乱」再来一次`);
+    renderCrossStats();
+  });
+
+  function todaysCross() {
+    return data.crossTimes.filter((x) => x.date === today()).map((x) => x.ms);
+  }
+
+  function renderCrossStats() {
+    const list = todaysCross();
+    document.getElementById("cross-count").textContent = String(list.length);
+    document.getElementById("cross-last").textContent = list.length ? fmt(list[list.length - 1]) : "—";
+    const a = avg(list);
+    document.getElementById("cross-avg").textContent = a == null ? "—" : fmt(a);
+    document.getElementById("cross-avg").style.color = a != null && a < 8000 ? "var(--green)" : "";
+    document.getElementById("cross-times").innerHTML = list
+      .slice()
+      .reverse()
+      .slice(0, 20)
+      .map((ms, i) => `<div>#${list.length - i} <strong>${fmt(ms)}</strong>s</div>`)
+      .join("");
+  }
+
+  // ── F2L full timer ──
+  let f2lState = "idle";
+  let f2lStart = 0;
+  let f2lRaf = null;
+
+  function tickF2l() {
+    document.getElementById("f2l-timer").textContent = fmt(Date.now() - f2lStart);
+    f2lRaf = requestAnimationFrame(tickF2l);
+  }
+
+  document.getElementById("f2l-start").addEventListener("click", () => {
+    f2lState = "running";
+    f2lStart = Date.now();
+    document.getElementById("f2l-timer").classList.add("running");
+    document.getElementById("f2l-start").disabled = true;
+    document.getElementById("f2l-stop").disabled = false;
+    document.getElementById("f2l-hint").textContent = "四组 F2L 进行中…";
+    tickF2l();
+  });
+  document.getElementById("f2l-stop").addEventListener("click", () => {
+    if (f2lState !== "running") return;
+    cancelAnimationFrame(f2lRaf);
+    const ms = Date.now() - f2lStart;
+    data.f2lTimes.push({ t: Date.now(), ms, date: today(), mode: "full" });
+    persist();
+    f2lState = "idle";
+    document.getElementById("f2l-timer").classList.remove("running");
+    document.getElementById("f2l-start").disabled = false;
+    document.getElementById("f2l-stop").disabled = true;
+    document.getElementById("f2l-hint").textContent = `完成 ${fmt(ms)}s`;
+    renderF2lStats();
+  });
+  document.getElementById("f2l-reset").addEventListener("click", () => {
+    cancelAnimationFrame(f2lRaf);
+    f2lState = "idle";
+    document.getElementById("f2l-timer").textContent = "0.00";
+    document.getElementById("f2l-timer").classList.remove("running");
+    document.getElementById("f2l-start").disabled = false;
+    document.getElementById("f2l-stop").disabled = true;
+    document.getElementById("f2l-hint").textContent = "准备好后开始";
+  });
+
+  function todaysF2lFull() {
+    return data.f2lTimes.filter((x) => x.date === today() && x.mode === "full").map((x) => x.ms);
+  }
+
+  function renderF2lStats() {
+    const list = todaysF2lFull();
+    document.getElementById("f2l-count").textContent = String(list.length);
+    document.getElementById("f2l-last").textContent = list.length ? fmt(list[list.length - 1]) : "—";
+    const a = avg(list);
+    document.getElementById("f2l-avg").textContent = a == null ? "—" : fmt(a);
+  }
+
+  // ── F2L case list ──
+  let currentGroupFilter = "all";
+  let activeCase = null;
+  let caseTimerState = "idle";
+  let caseStart = 0;
+  let caseRaf = null;
+
+  function renderF2lFilter() {
+    const bar = document.getElementById("f2l-filter");
+    const groups = F2LData.getGroupNumbers();
+    const items = [{ id: "all", label: "全部" }].concat(
+      groups.map((g) => ({ id: String(g), label: `组 ${g}` }))
+    );
+    bar.innerHTML = items
+      .map(
+        (it) =>
+          `<button type="button" data-g="${it.id}" class="${String(currentGroupFilter) === it.id ? "active" : ""}">${it.label}</button>`
+      )
+      .join("");
+    bar.querySelectorAll("button").forEach((b) => {
+      b.addEventListener("click", () => {
+        currentGroupFilter = b.getAttribute("data-g") === "all" ? "all" : parseInt(b.getAttribute("data-g"), 10);
+        renderF2lFilter();
+        renderF2lList(currentGroupFilter);
+      });
+    });
+  }
+
+  function renderDecisionTree() {
+    const root = document.getElementById("f2l-decision-tree");
+    if (!root || !F2LData.DECISION_TREE) return;
+    root.innerHTML =
+      '<div class="decision-tree">' +
+      F2LData.DECISION_TREE.map(
+        (block) =>
+          `<div class="dt-q">${block.q}</div><ul>${block.a.map((line) => `<li>${line}</li>`).join("")}</ul>`
+      ).join("") +
+      "</div>";
+  }
+
+  function renderF2lList(filter) {
+    const grouped = F2LData.byGroup();
+    const root = document.getElementById("f2l-list");
+    const allGroups = F2LData.getGroupNumbers();
+    const groups = filter === "all" ? allGroups : [filter];
+    let html = "";
+    for (const g of groups) {
+      const meta = F2LData.GROUP_META[g];
+      html += `<div class="group-head">${meta.title}</div>`;
+      html += `<div class="group-decision">认组：${meta.decision}</div>`;
+      html += `<div class="group-blurb">${meta.blurb}</div>`;
+      for (const c of grouped[g] || []) {
+        const count = data.casePractice[c.id] || 0;
+        let diagram = "";
+        try {
+          diagram = CubeDraw.drawCase(c.setupAlg);
+        } catch (e) {
+          diagram = `<p class="muted">示意图生成失败：${e.message}</p>`;
+        }
+        html += `<div class="case-card" data-case="${c.id}">
+          <div class="name">${c.name} <span class="pill">${count} 次</span></div>
+          <div class="recog">${c.recognition}</div>
+          <div class="diagram">${diagram}</div>
+          <div class="alg-label">还原</div>
+          <div class="alg-box mono">${c.solveAlg}</div>
+          <div class="btn-row">
+            <button type="button" class="btn" data-open="${c.id}">对着练</button>
+          </div>
+        </div>`;
+      }
+    }
+    root.innerHTML = html;
+    root.querySelectorAll("[data-open]").forEach((btn) => {
+      btn.addEventListener("click", () => openCase(btn.getAttribute("data-open")));
+    });
+  }
+
+  function openCase(id) {
+    activeCase = F2LData.getById(id);
+    if (!activeCase) return;
+    document.getElementById("modal-title").textContent = activeCase.name;
+    document.getElementById("modal-recog").textContent = activeCase.recognition;
+    document.getElementById("modal-setup").textContent = activeCase.setupAlg;
+    document.getElementById("modal-solve").textContent = activeCase.solveAlg;
+    const alt = document.getElementById("modal-alt");
+    const altLabel = document.getElementById("modal-alt-label");
+    if (activeCase.altAlgs && activeCase.altAlgs.length) {
+      alt.classList.remove("hidden");
+      altLabel.textContent = "替代公式";
+      alt.textContent = activeCase.altAlgs.join("  ｜  ");
+    } else {
+      alt.classList.add("hidden");
+      altLabel.textContent = "";
+      alt.textContent = "";
+    }
+    try {
+      document.getElementById("modal-diagram").innerHTML = CubeDraw.drawCase(activeCase.setupAlg);
+    } catch (e) {
+      document.getElementById("modal-diagram").innerHTML = `<p class="muted">${e.message}</p>`;
+    }
+    document.getElementById("case-timer").textContent = "0.00";
+    document.getElementById("case-timer-start").disabled = false;
+    document.getElementById("case-timer-stop").disabled = true;
+    document.getElementById("modal-hint").textContent =
+      "先按复现公式摆出画面，再按还原插入。可开计时。";
+    document.getElementById("case-modal").classList.remove("hidden");
+  }
+
+  function closeCase() {
+    cancelAnimationFrame(caseRaf);
+    caseTimerState = "idle";
+    document.getElementById("case-modal").classList.add("hidden");
+    activeCase = null;
+  }
+
+  document.getElementById("case-close").addEventListener("click", closeCase);
+  document.getElementById("case-modal").addEventListener("click", (e) => {
+    if (e.target.id === "case-modal") closeCase();
+  });
+
+  document.getElementById("case-practiced").addEventListener("click", () => {
+    if (!activeCase) return;
+    data.casePractice[activeCase.id] = (data.casePractice[activeCase.id] || 0) + 1;
+    persist();
+    document.getElementById("modal-hint").textContent =
+      `已记 1 次 · 本情况共 ${data.casePractice[activeCase.id]} 次`;
+    renderF2lList(currentGroupFilter);
+  });
+
+  document.getElementById("case-timer-start").addEventListener("click", () => {
+    caseTimerState = "running";
+    caseStart = Date.now();
+    document.getElementById("case-timer-start").disabled = true;
+    document.getElementById("case-timer-stop").disabled = false;
+    document.getElementById("modal-hint").textContent = "还原计时中…";
+    const tick = () => {
+      document.getElementById("case-timer").textContent = fmt(Date.now() - caseStart);
+      caseRaf = requestAnimationFrame(tick);
+    };
+    tick();
+  });
+
+  document.getElementById("case-timer-stop").addEventListener("click", () => {
+    if (caseTimerState !== "running" || !activeCase) return;
+    cancelAnimationFrame(caseRaf);
+    const ms = Date.now() - caseStart;
+    data.f2lTimes.push({
+      t: Date.now(),
+      ms,
+      date: today(),
+      mode: "case",
+      caseId: activeCase.id,
+    });
+    data.casePractice[activeCase.id] = (data.casePractice[activeCase.id] || 0) + 1;
+    persist();
+    caseTimerState = "idle";
+    document.getElementById("case-timer-start").disabled = false;
+    document.getElementById("case-timer-stop").disabled = true;
+    document.getElementById("modal-hint").textContent = `还原 ${fmt(ms)}s · 已记入练习`;
+    renderF2lList(currentGroupFilter);
+  });
+
+  // ── Recognition quiz ──
+  let quizGroupFilter = F2LData.getGroupNumbers();
+  let quizCase = null;
+  let quizPhase = "idle"; // idle | group | case | done
+  let quizAnswered = false;
+
+  function getQuizMode() {
+    const el = document.querySelector('input[name="quiz-mode"]:checked');
+    return el ? el.value : "group";
+  }
+
+  function quizPool() {
+    return F2LData.getCases().filter((c) => quizGroupFilter.includes(c.group));
+  }
+
+  function pickRandom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function shuffleArr(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function ensureQuizStats() {
+    if (!data.recognitionQuiz) {
+      data.recognitionQuiz = { total: 0, correct: 0, byDate: {} };
+    }
+  }
+
+  function recordQuiz(correct) {
+    ensureQuizStats();
+    const d = today();
+    data.recognitionQuiz.total += 1;
+    if (correct) data.recognitionQuiz.correct += 1;
+    if (!data.recognitionQuiz.byDate[d]) data.recognitionQuiz.byDate[d] = { total: 0, correct: 0 };
+    data.recognitionQuiz.byDate[d].total += 1;
+    if (correct) data.recognitionQuiz.byDate[d].correct += 1;
+    persist();
+    renderQuizStats();
+  }
+
+  function renderQuizStats() {
+    const el = document.getElementById("quiz-stats");
+    if (!el) return;
+    ensureQuizStats();
+    const d = today();
+    const day = data.recognitionQuiz.byDate[d] || { total: 0, correct: 0 };
+    const all = data.recognitionQuiz;
+    const dayPct = day.total ? Math.round((day.correct / day.total) * 100) : null;
+    const allPct = all.total ? Math.round((all.correct / all.total) * 100) : null;
+    el.textContent =
+      `今日 ${day.correct}/${day.total}` +
+      (dayPct != null ? `（${dayPct}%）` : "") +
+      ` ｜ 累计 ${all.correct}/${all.total}` +
+      (allPct != null ? `（${allPct}%）` : "");
+  }
+
+  function renderQuizFilter() {
+    const bar = document.getElementById("quiz-group-filter");
+    if (!bar) return;
+    const all = F2LData.getGroupNumbers();
+    const activeKey = quizGroupFilter.length === all.length ? "all" : quizGroupFilter.join(",");
+    const items = [{ id: "all", label: "全部组" }].concat(all.map((g) => ({ id: String(g), label: `组 ${g}` })));
+    bar.innerHTML = items
+      .map((it) => {
+        const on =
+          it.id === "all"
+            ? quizGroupFilter.length === all.length
+            : quizGroupFilter.length === 1 && quizGroupFilter[0] === parseInt(it.id, 10);
+        return `<button type="button" data-qg="${it.id}" class="${on ? "active" : ""}">${it.label}</button>`;
+      })
+      .join("");
+    bar.querySelectorAll("button").forEach((b) => {
+      b.addEventListener("click", () => {
+        const id = b.getAttribute("data-qg");
+        quizGroupFilter = id === "all" ? all.slice() : [parseInt(id, 10)];
+        renderQuizFilter();
+      });
+    });
+  }
+
+  function setQuizUI({ prompt, optionsHtml, showResult, resultHtml, showReveal, showPractice }) {
+    document.getElementById("quiz-prompt").textContent = prompt || "";
+    const opt = document.getElementById("quiz-options");
+    opt.innerHTML = optionsHtml || "";
+    opt.classList.toggle("hidden", !optionsHtml);
+    const res = document.getElementById("quiz-result");
+    res.innerHTML = resultHtml || "";
+    res.classList.toggle("hidden", !showResult);
+    document.getElementById("quiz-reveal").classList.toggle("hidden", !showReveal);
+    document.getElementById("quiz-practice").classList.toggle("hidden", !showPractice);
+  }
+
+  function drawQuizCase(c) {
+    try {
+      document.getElementById("quiz-diagram").innerHTML = CubeDraw.drawCase(c.setupAlg);
+    } catch (e) {
+      document.getElementById("quiz-diagram").innerHTML = `<p class="muted">${e.message}</p>`;
+    }
+  }
+
+  function startQuizQuestion() {
+    const pool = quizPool();
+    if (!pool.length) {
+      setQuizUI({ prompt: "请先选择至少一组", optionsHtml: "", showResult: false, showReveal: false, showPractice: false });
+      return;
+    }
+    quizCase = pickRandom(pool);
+    quizAnswered = false;
+    drawQuizCase(quizCase);
+    const mode = getQuizMode();
+    if (mode === "case") {
+      quizPhase = "case";
+      showCaseOptions();
+    } else {
+      quizPhase = "group";
+      showGroupOptions();
+    }
+  }
+
+  function showGroupOptions() {
+    const correct = quizCase.group;
+    const all = F2LData.getGroupNumbers();
+    let distractors = all.filter((g) => g !== correct);
+    distractors = shuffleArr(distractors).slice(0, 3);
+    const opts = shuffleArr([correct, ...distractors]);
+    const html = opts
+      .map((g) => {
+        const meta = F2LData.GROUP_META[g];
+        return `<button type="button" data-qg-pick="${g}">第 ${g} 组<br><span class="muted" style="font-size:0.7rem">${meta.title.replace(/第 \d+ 组 · /, "")}</span></button>`;
+      })
+      .join("");
+    setQuizUI({
+      prompt: "这是第几组？（四选一）",
+      optionsHtml: html,
+      showResult: false,
+      showReveal: true,
+      showPractice: false,
+    });
+    document.getElementById("quiz-options").querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => onGroupPick(parseInt(btn.getAttribute("data-qg-pick"), 10)));
+    });
+  }
+
+  function showCaseOptions() {
+    const sameGroup = F2LData.getByGroup(quizCase.group);
+    let opts = shuffleArr(sameGroup);
+    if (opts.length > 4) {
+      const rest = opts.filter((c) => c.id !== quizCase.id);
+      opts = shuffleArr([quizCase, ...shuffleArr(rest).slice(0, 3)]);
+    }
+    opts = shuffleArr(opts);
+    const html = opts.map((c) => `<button type="button" data-qc-pick="${c.id}">${c.name}</button>`).join("");
+    setQuizUI({
+      prompt: `第 ${quizCase.group} 组内：是哪一种？`,
+      optionsHtml: html,
+      showResult: false,
+      showReveal: true,
+      showPractice: false,
+    });
+    document.getElementById("quiz-options").querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => onCasePick(btn.getAttribute("data-qc-pick")));
+    });
+  }
+
+  function onGroupPick(g) {
+    if (quizAnswered || !quizCase) return;
+    quizAnswered = true;
+    const ok = g === quizCase.group;
+    recordQuiz(ok);
+    highlightQuizButtons("data-qg-pick", String(g), String(quizCase.group), ok);
+    const meta = F2LData.GROUP_META[quizCase.group];
+    let resultHtml =
+      (ok ? "✓ 组认对了！" : `✗ 这是第 ${quizCase.group} 组`) +
+      `<br><strong>${meta.title}</strong><br>${meta.decision}`;
+    if (getQuizMode() === "group" && ok) {
+      quizPhase = "case";
+      setQuizUI({
+        prompt: "组对了！继续认具体哪一种：",
+        optionsHtml: "",
+        showResult: true,
+        resultHtml,
+        showReveal: false,
+        showPractice: false,
+      });
+      setTimeout(() => {
+        quizAnswered = false;
+        showCaseOptions();
+      }, 600);
+      return;
+    }
+    setQuizUI({
+      prompt: ok ? "组认对了" : "再看看决策树",
+      optionsHtml: "",
+      showResult: true,
+      resultHtml: resultHtml + `<br><br>${quizCase.name}<br>${quizCase.recognition}`,
+      showReveal: false,
+      showPractice: true,
+    });
+    quizPhase = "done";
+  }
+
+  function onCasePick(id) {
+    if (quizAnswered || !quizCase) return;
+    quizAnswered = true;
+    const ok = id === quizCase.id;
+    recordQuiz(ok);
+    highlightQuizButtons("data-qc-pick", id, quizCase.id, ok);
+    const resultHtml =
+      (ok ? "✓ 情况认对了！" : `✗ 正确：${quizCase.name}`) +
+      `<br>${quizCase.recognition}<br><span class="muted">还原：${quizCase.solveAlg}</span>`;
+    setQuizUI({
+      prompt: ok ? "认对了" : "记住识别特征",
+      optionsHtml: "",
+      showResult: true,
+      resultHtml,
+      showReveal: false,
+      showPractice: true,
+    });
+    quizPhase = "done";
+  }
+
+  function highlightQuizButtons(attr, picked, correct, ok) {
+    document.getElementById("quiz-options").querySelectorAll("button").forEach((btn) => {
+      const v = btn.getAttribute(attr);
+      btn.disabled = true;
+      if (v === correct) btn.classList.add("correct");
+      else if (v === picked && !ok) btn.classList.add("wrong");
+      else if (v === correct && !ok) btn.classList.add("missed");
+    });
+  }
+
+  function revealQuizAnswer() {
+    if (!quizCase || quizPhase === "done") return;
+    const meta = F2LData.GROUP_META[quizCase.group];
+    setQuizUI({
+      prompt: "答案",
+      optionsHtml: "",
+      showResult: true,
+      resultHtml:
+        `<strong>${meta.title}</strong> · ${quizCase.name}<br>${quizCase.recognition}<br><span class="muted">还原：${quizCase.solveAlg}</span>`,
+      showReveal: false,
+      showPractice: true,
+    });
+    quizPhase = "done";
+    quizAnswered = true;
+  }
+
+  document.getElementById("quiz-next").addEventListener("click", startQuizQuestion);
+  document.getElementById("quiz-reveal").addEventListener("click", revealQuizAnswer);
+  document.getElementById("quiz-practice").addEventListener("click", () => {
+    if (quizCase) openCase(quizCase.id);
+  });
+  document.querySelectorAll('input[name="quiz-mode"]').forEach((inp) => {
+    inp.addEventListener("change", () => {
+      if (quizCase && quizPhase !== "idle") startQuizQuestion();
+    });
+  });
+
+  // ── Me / backup ──
+  function renderMe() {
+    const checks = Object.keys(data.planChecks[today()] || {}).filter(
+      (k) => data.planChecks[today()][k]
+    ).length;
+    const q = data.recognitionQuiz || { total: 0, correct: 0 };
+    document.getElementById("me-summary").textContent =
+      `今日勾选 ${checks} 项 · 十字 ${data.crossTimes.length} · F2L 计时 ${data.f2lTimes.length} · 情况练习 ${Object.values(data.casePractice).reduce((a, b) => a + b, 0)} 次 · 认图 ${q.correct}/${q.total}`;
+  }
+
+  document.getElementById("btn-export-copy").addEventListener("click", async () => {
+    const text = StorageAPI.exportJSON(data);
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("已复制到剪贴板");
+    } catch {
+      prompt("复制下面全部内容：", text);
+    }
+  });
+
+  document.getElementById("btn-export-file").addEventListener("click", () => {
+    const text = StorageAPI.exportJSON(data);
+    const blob = new Blob([text], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `cube-trainer-backup-${today()}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  function readImportText() {
+    return document.getElementById("import-text").value.trim();
+  }
+
+  document.getElementById("import-file").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      document.getElementById("import-text").value = String(reader.result || "");
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById("btn-import-merge").addEventListener("click", () => {
+    try {
+      const incoming = StorageAPI.parseImport(readImportText());
+      data.crossTimes = data.crossTimes.concat(incoming.crossTimes || []);
+      data.f2lTimes = data.f2lTimes.concat(incoming.f2lTimes || []);
+      data.planChecks = Object.assign({}, incoming.planChecks, data.planChecks);
+      for (const [k, v] of Object.entries(incoming.casePractice || {})) {
+        data.casePractice[k] = (data.casePractice[k] || 0) + v;
+      }
+      if (incoming.recognitionQuiz) {
+        ensureQuizStats();
+        data.recognitionQuiz.total += incoming.recognitionQuiz.total || 0;
+        data.recognitionQuiz.correct += incoming.recognitionQuiz.correct || 0;
+        for (const [d, st] of Object.entries(incoming.recognitionQuiz.byDate || {})) {
+          if (!data.recognitionQuiz.byDate[d]) data.recognitionQuiz.byDate[d] = { total: 0, correct: 0 };
+          data.recognitionQuiz.byDate[d].total += st.total || 0;
+          data.recognitionQuiz.byDate[d].correct += st.correct || 0;
+        }
+      }
+      persist();
+      alert("合并导入成功");
+      renderMe();
+    } catch (err) {
+      alert("导入失败：" + err.message);
+    }
+  });
+
+  document.getElementById("btn-import-replace").addEventListener("click", () => {
+    if (!confirm("覆盖将替换本机全部训练数据，确定？")) return;
+    try {
+      data = StorageAPI.parseImport(readImportText());
+      persist();
+      alert("覆盖导入成功");
+      initDaySelects();
+      renderMe();
+      renderToday();
+    } catch (err) {
+      alert("导入失败：" + err.message);
+    }
+  });
+
+  document.getElementById("btn-clear").addEventListener("click", () => {
+    if (!confirm("确定清空本机全部数据？建议先导出备份。")) return;
+    if (!confirm("再次确认：无法恢复（除非你有备份）。")) return;
+    data = StorageAPI.defaultData();
+    persist();
+    alert("已清空");
+    initDaySelects();
+    renderMe();
+    renderToday();
+    renderCrossStats();
+    renderF2lStats();
+  });
+
+  // ── Boot ──
+  initDaySelects();
+  newCrossScramble();
+  renderF2lFilter();
+  renderDecisionTree();
+  renderQuizFilter();
+  renderQuizStats();
+  renderToday();
+  renderCrossStats();
+  renderF2lStats();
+  renderF2lList("all");
+  renderMe();
+})();
+
+</script>
+
+</body>
+</html>

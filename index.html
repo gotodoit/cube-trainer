@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f1117" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="魔方训练" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <title>魔方训练 · 十字 + F2L</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <h1>魔方训练</h1>
+      <div class="sub" id="top-sub">十字 + F2L 全套 · 数据仅存本机</div>
+    </header>
+
+    <!-- 今日 -->
+    <section class="panel active" id="panel-today">
+      <div class="card">
+        <h2>今日计划</h2>
+        <div class="day-select">
+          <label class="muted">十字阶段日</label>
+          <select id="stage-day"></select>
+          <label class="muted">F2L 日</label>
+          <select id="f2l-day"></select>
+        </div>
+        <p class="muted" id="today-labels"></p>
+        <div id="today-tasks"></div>
+      </div>
+      <div class="card">
+        <h2>快速入口</h2>
+        <div class="btn-row">
+          <button class="btn" type="button" data-nav="cross">练十字</button>
+          <button class="btn btn-outline" type="button" data-nav="f2l">F2L 图鉴</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 十字 -->
+    <section class="panel" id="panel-cross">
+      <div class="card">
+        <h2>十字单项</h2>
+        <p class="muted">打乱 → 观察 15 秒规划 → 开始计时 → 十字完成即停</p>
+        <div class="scramble mono" id="cross-scramble">—</div>
+        <div class="btn-row">
+          <button class="btn btn-outline" type="button" id="cross-new-scramble">新打乱</button>
+        </div>
+        <p class="muted scramble-status hidden" id="cross-scramble-status"></p>
+        <div class="optimal" id="cross-optimal">
+          <div class="optimal-head">
+            <span id="cross-optimal-meta">最优十字 · —</span>
+            <button type="button" class="btn-text" id="cross-optimal-toggle">显示公式</button>
+          </div>
+          <div class="alg-box mono hidden" id="cross-optimal-alg"></div>
+          <p class="muted" style="margin-top:6px">白底、当前朝向（黄顶绿前）。先自己规划，再对照。</p>
+        </div>
+        <div class="observe-bar"><i id="cross-observe-bar" style="transform:scaleX(0)"></i></div>
+        <div class="hint" id="cross-hint">可先「开始观察」规划，也可直接「开始拧」；观察不必满 15 秒</div>
+        <div class="timer" id="cross-timer">0.00</div>
+        <div class="btn-row">
+          <button class="btn btn-orange" type="button" id="cross-observe">开始观察</button>
+          <button class="btn btn-green btn-lg" type="button" id="cross-start">开始拧</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-lg" type="button" id="cross-stop" disabled>十字完成</button>
+          <button class="btn btn-outline" type="button" id="cross-reset">重置</button>
+        </div>
+        <div class="stats-row">
+          <div class="stat"><div class="v" id="cross-last">—</div><div class="l">本次</div></div>
+          <div class="stat"><div class="v" id="cross-avg">—</div><div class="l">今日平均</div></div>
+          <div class="stat"><div class="v" id="cross-count">0</div><div class="l">今日次数</div></div>
+        </div>
+        <p class="muted" style="margin-top:8px">目标线：平均 &lt; 8 秒</p>
+        <div class="times-list" id="cross-times"></div>
+      </div>
+      <div class="card" id="finger-drill">
+        <h2>手法练习</h2>
+        <p class="muted">Sexy Move 连做 20 次，保持节奏均匀，手指放松、不锁死。</p>
+        <div class="alg-box mono">R U R' U'</div>
+        <p class="hint">建议先慢做准确，再逐渐提速；20 次后回到原状。</p>
+      </div>
+    </section>
+
+    <!-- F2L -->
+    <section class="panel" id="panel-f2l">
+      <div class="card">
+        <h2>F2L 四组计时</h2>
+        <p class="muted">十字已做好后点开始，四组插完点完成</p>
+        <div class="timer" id="f2l-timer">0.00</div>
+        <div class="hint" id="f2l-hint">准备好后开始</div>
+        <div class="btn-row">
+          <button class="btn btn-green btn-lg" type="button" id="f2l-start">开始</button>
+          <button class="btn btn-lg" type="button" id="f2l-stop" disabled>四组完成</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-outline" type="button" id="f2l-reset">重置</button>
+        </div>
+        <div class="stats-row">
+          <div class="stat"><div class="v" id="f2l-last">—</div><div class="l">本次</div></div>
+          <div class="stat"><div class="v" id="f2l-avg">—</div><div class="l">今日平均</div></div>
+          <div class="stat"><div class="v" id="f2l-count">0</div><div class="l">今日次数</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>认图练习</h2>
+        <p class="muted">只看图，先选<strong>第几组</strong>，再选<strong>哪一种</strong>。练闭卷认情况。</p>
+        <div class="quiz-stats" id="quiz-stats">今日 — / 累计 —</div>
+        <div class="filter-bar" id="quiz-group-filter"></div>
+        <div class="quiz-mode">
+          <label><input type="radio" name="quiz-mode" value="group" checked /> 先认组</label>
+          <label><input type="radio" name="quiz-mode" value="case" /> 直接认情况</label>
+        </div>
+        <div class="diagram quiz-diagram" id="quiz-diagram"></div>
+        <p class="hint" id="quiz-prompt">点「下一题」开始</p>
+        <div class="quiz-options hidden" id="quiz-options"></div>
+        <div class="quiz-result hidden" id="quiz-result"></div>
+        <div class="btn-row">
+          <button class="btn btn-green" type="button" id="quiz-next">下一题</button>
+          <button class="btn btn-outline hidden" type="button" id="quiz-reveal">揭晓答案</button>
+          <button class="btn btn-outline hidden" type="button" id="quiz-practice">对着练</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>F2L 图鉴 · 组 1–12（41 例）</h2>
+        <details class="decision-details">
+          <summary>组级认图决策树（点开展开）</summary>
+          <div id="f2l-decision-tree"></div>
+        </details>
+        <p class="muted" style="margin:10px 0">
+          图是<strong>等轴测立体示意</strong>：捏着魔方<strong>右前角</strong>看——黄顶、绿前、橙右。
+          <strong>金边</strong>是当前角+棱；槽位固定 FR。识别说明格式：<strong>位置 · 连接 · 白角 · 区分点</strong>。
+          <br />立体图里<strong>前面 F 的贴纸常画在左侧</strong>，不要和左面 L 混淆。
+        </p>
+        <div class="filter-bar" id="f2l-filter"></div>
+        <div id="f2l-list"></div>
+      </div>
+    </section>
+
+    <!-- 我的 -->
+    <section class="panel" id="panel-me">
+      <div class="card">
+        <h2>本机数据</h2>
+        <p class="muted" id="me-summary">—</p>
+      </div>
+      <div class="card">
+        <h2>导出备份</h2>
+        <p class="muted">换机或清 Safari 数据前先备份。iPhone 建议用「复制」。</p>
+        <div class="btn-row">
+          <button class="btn" type="button" id="btn-export-copy">复制 JSON</button>
+          <button class="btn btn-outline" type="button" id="btn-export-file">下载文件</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>导入备份</h2>
+        <p class="muted">粘贴 JSON，或选择文件。可合并或覆盖。</p>
+        <textarea class="import" id="import-text" placeholder="在此粘贴导出的 JSON…"></textarea>
+        <input type="file" id="import-file" accept="application/json,.json,text/plain" class="muted" />
+        <div class="btn-row">
+          <button class="btn btn-outline" type="button" id="btn-import-merge">合并导入</button>
+          <button class="btn btn-danger" type="button" id="btn-import-replace">覆盖导入</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>危险操作</h2>
+        <button class="btn btn-danger" type="button" id="btn-clear">清空本机全部数据</button>
+      </div>
+      <div class="card">
+        <h2>使用提示</h2>
+        <p class="muted">
+          不想连电脑：把同目录的 <code>手机训练-单文件.html</code> 拷到手机，用 Safari/Chrome 直接打开即可。
+          多文件版可「添加到主屏幕」离线用。换机前先导出备份。
+        </p>
+      </div>
+    </section>
+
+    <nav class="bottom-nav">
+      <button type="button" class="active" data-nav="today"><span class="ico">日</span>今日</button>
+      <button type="button" data-nav="cross"><span class="ico">十</span>十字</button>
+      <button type="button" data-nav="f2l"><span class="ico">F</span>F2L</button>
+      <button type="button" data-nav="me"><span class="ico">我</span>我的</button>
+    </nav>
+  </div>
+
+  <div class="modal-backdrop hidden" id="case-modal">
+    <div class="modal">
+      <h2 id="modal-title">情况练习</h2>
+      <div class="diagram" id="modal-diagram"></div>
+      <p class="recog muted" id="modal-recog"></p>
+      <div class="alg-label">① 复现（拧到该情况）</div>
+      <div class="alg-box mono" id="modal-setup"></div>
+      <div class="alg-label">② 还原</div>
+      <div class="alg-box mono" id="modal-solve"></div>
+      <div class="alg-label" id="modal-alt-label"></div>
+      <div class="alg-box mono hidden" id="modal-alt"></div>
+      <div class="hint" id="modal-hint">先按复现公式摆出，再按还原公式插入。可开计时练速度。</div>
+      <div class="timer" id="case-timer">0.00</div>
+      <div class="btn-row">
+        <button class="btn btn-green" type="button" id="case-timer-start">计时还原</button>
+        <button class="btn" type="button" id="case-timer-stop" disabled>完成</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline" type="button" id="case-practiced">记一次练习</button>
+        <button class="btn btn-outline" type="button" id="case-close">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="lib/cubejs.js"></script>
+  <script src="lib/cube.js"></script>
+  <script src="lib/cube-draw.js"></script>
+  <script src="lib/scramble.js"></script>
+  <script src="lib/cross-solver.js"></script>
+  <script src="lib/storage.js"></script>
+  <script src="data/f2l-cases.js"></script>
+  <script src="data/plans.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    }
+  </script>
+</body>
+</html>
