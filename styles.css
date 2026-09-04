@@ -348,7 +348,7 @@ html, body {
   background: var(--surface);
   border-top: 1px solid var(--border);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   z-index: 30;
 }
 .bottom-nav button {
@@ -431,4 +431,35 @@ textarea.import {
   background: var(--orange);
   transform-origin: left;
   transition: transform 0.1s linear;
+}
+
+/* PLL 卡片 */
+.pll-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.pll-card .pll-name { font-weight: 600; margin-bottom: 4px; }
+.pll-card .pll-desc { font-size: 0.78rem; color: var(--accent2); margin-bottom: 2px; }
+.pll-card .pll-recog { font-size: 0.78rem; color: var(--orange); margin-bottom: 8px; }
+
+/* 顶层俯视图 */
+.pll-diagram {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
+  background: #12141c;
+  border-radius: 8px;
+  padding: 8px;
+}
+.pll-diagram-label {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+  letter-spacing: 0.3px;
 }

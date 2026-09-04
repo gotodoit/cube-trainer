@@ -12,6 +12,7 @@ SCRIPTS = [
     "lib/cross-solver.js",
     "lib/storage.js",
     "data/f2l-cases.js",
+    "data/pll-cases.js",
     "data/plans.js",
     "app.js",
 ]

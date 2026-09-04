@@ -14,6 +14,7 @@ function load(rel) {
 
 load("lib/cube.js");
 load("data/f2l-cases.js");
+load("data/pll-cases.js");
 load("data/plans.js");
 
 const solved = new Cube().asString();
@@ -55,4 +56,18 @@ const sexyTask = PlanData.CROSS_DAYS["3-4"].tasks.find(
 assert.equal(fingerTask.go, "finger", "手法 5 分钟应跳到手法练习区");
 assert.equal(sexyTask.go, "finger", "Sexy 连做应跳到手法练习区");
 
-console.log(`PASS: ${cases.length} 条公式与手法练习跳转检查通过`);
+// ── PLL 校验 ──
+const pllCases = PLLData.getCases();
+assert.equal(pllCases.length, 5, "应包含 5 种 PLL");
+
+for (const c of pllCases) {
+  const cube = CubeEngine.applyAlg(c.setupAlg);
+  cube.move(CubeEngine.expandRepeats(c.solveAlg));
+  assert.equal(
+    cube.asString(),
+    solved,
+    `${c.id}（${c.name}）：setupAlg + solveAlg 应还原整个魔方`
+  );
+}
+
+console.log(`PASS: ${cases.length} 条 F2L 公式 + ${pllCases.length} 条 PLL 公式 + 手法跳转 全部通过`);

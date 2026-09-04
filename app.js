@@ -34,6 +34,7 @@
       renderF2lList(currentGroupFilter);
     }
     if (name === "me") renderMe();
+    if (name === "pll") renderPLLList();
   }
 
   document.querySelectorAll("[data-nav]").forEach((el) => {
@@ -473,11 +474,20 @@
 
   document.getElementById("case-practiced").addEventListener("click", () => {
     if (!activeCase) return;
-    data.casePractice[activeCase.id] = (data.casePractice[activeCase.id] || 0) + 1;
-    persist();
-    document.getElementById("modal-hint").textContent =
-      `已记 1 次 · 本情况共 ${data.casePractice[activeCase.id]} 次`;
-    renderF2lList(currentGroupFilter);
+    const id = activeCase.id;
+    if (id.startsWith("pll-")) {
+      data.pllPractice[id] = (data.pllPractice[id] || 0) + 1;
+      persist();
+      document.getElementById("modal-hint").textContent =
+        `已记 1 次 · 本公式共 ${data.pllPractice[id]} 次`;
+      renderPLLList();
+    } else {
+      data.casePractice[id] = (data.casePractice[id] || 0) + 1;
+      persist();
+      document.getElementById("modal-hint").textContent =
+        `已记 1 次 · 本情况共 ${data.casePractice[id]} 次`;
+      renderF2lList(currentGroupFilter);
+    }
   });
 
   document.getElementById("case-timer-start").addEventListener("click", () => {
@@ -497,21 +507,95 @@
     if (caseTimerState !== "running" || !activeCase) return;
     cancelAnimationFrame(caseRaf);
     const ms = Date.now() - caseStart;
-    data.f2lTimes.push({
-      t: Date.now(),
-      ms,
-      date: today(),
-      mode: "case",
-      caseId: activeCase.id,
+    const id = activeCase.id;
+    if (id.startsWith("pll-")) {
+      data.pllPractice[id] = (data.pllPractice[id] || 0) + 1;
+      persist();
+      caseTimerState = "idle";
+      document.getElementById("case-timer-start").disabled = false;
+      document.getElementById("case-timer-stop").disabled = true;
+      document.getElementById("modal-hint").textContent = `还原 ${fmt(ms)}s · 已记入练习`;
+      renderPLLList();
+    } else {
+      data.f2lTimes.push({
+        t: Date.now(),
+        ms,
+        date: today(),
+        mode: "case",
+        caseId: id,
+      });
+      data.casePractice[id] = (data.casePractice[id] || 0) + 1;
+      persist();
+      caseTimerState = "idle";
+      document.getElementById("case-timer-start").disabled = false;
+      document.getElementById("case-timer-stop").disabled = true;
+      document.getElementById("modal-hint").textContent = `还原 ${fmt(ms)}s · 已记入练习`;
+      renderF2lList(currentGroupFilter);
+    }
+  });
+
+  // ── PLL case list ──
+  function renderPLLList() {
+    const root = document.getElementById("pll-list");
+    if (!root) return;
+    const cases = PLLData.getCases();
+    let html = "";
+    for (const c of cases) {
+      const count = data.pllPractice[c.id] || 0;
+      let diagram = "";
+      try {
+        diagram = CubeDraw.drawPLLCase(c.setupAlg);
+      } catch (e) {
+        diagram = `<p class="muted">示意图生成失败：${e.message}</p>`;
+      }
+      html += `<div class="pll-card">
+        <div class="pll-name">${c.name} <span class="pill">${count} 次</span></div>
+        <div class="pll-desc">${c.description}</div>
+        <div class="pll-recog">识别：${c.recognition}</div>
+        <div class="pll-diagram-label">
+          <span>← B →</span>
+          <span>俯视（黄顶绿前）</span>
+          <span>← F →</span>
+        </div>
+        <div class="pll-diagram">${diagram}</div>
+        <div class="alg-label">公式</div>
+        <div class="alg-box mono">${c.solveAlg}</div>
+        <div class="btn-row">
+          <button type="button" class="btn" data-open-pll="${c.id}">对着练</button>
+        </div>
+      </div>`;
+    }
+    root.innerHTML = html;
+    root.querySelectorAll("[data-open-pll]").forEach((btn) => {
+      btn.addEventListener("click", () => openPLLCase(btn.getAttribute("data-open-pll")));
     });
-    data.casePractice[activeCase.id] = (data.casePractice[activeCase.id] || 0) + 1;
-    persist();
-    caseTimerState = "idle";
+  }
+
+  function openPLLCase(id) {
+    const c = PLLData.getById(id);
+    if (!c) return;
+    activeCase = c;
+    document.getElementById("modal-title").textContent = c.name;
+    document.getElementById("modal-recog").textContent = c.recognition;
+    document.getElementById("modal-setup").textContent = c.setupAlg;
+    document.getElementById("modal-solve").textContent = c.solveAlg;
+    const alt = document.getElementById("modal-alt");
+    const altLabel = document.getElementById("modal-alt-label");
+    alt.classList.add("hidden");
+    altLabel.textContent = "";
+    alt.textContent = "";
+    try {
+      document.getElementById("modal-diagram").innerHTML = CubeDraw.drawPLLCase(c.setupAlg);
+    } catch (e) {
+      document.getElementById("modal-diagram").innerHTML = `<p class="muted">${e.message}</p>`;
+    }
+    document.getElementById("case-timer").textContent = "0.00";
     document.getElementById("case-timer-start").disabled = false;
     document.getElementById("case-timer-stop").disabled = true;
-    document.getElementById("modal-hint").textContent = `还原 ${fmt(ms)}s · 已记入练习`;
-    renderF2lList(currentGroupFilter);
-  });
+    document.getElementById("modal-hint").textContent =
+      "先按「复现」公式摆出 PLL 起始状态，再执行「还原」公式。";
+    document.getElementById("case-modal").classList.remove("hidden");
+  }
 
   // ── Recognition quiz ──
   let quizGroupFilter = F2LData.getGroupNumbers();
@@ -783,8 +867,9 @@
       (k) => data.planChecks[today()][k]
     ).length;
     const q = data.recognitionQuiz || { total: 0, correct: 0 };
+    const pllCount = Object.values(data.pllPractice || {}).reduce((a, b) => a + b, 0);
     document.getElementById("me-summary").textContent =
-      `今日勾选 ${checks} 项 · 十字 ${data.crossTimes.length} · F2L 计时 ${data.f2lTimes.length} · 情况练习 ${Object.values(data.casePractice).reduce((a, b) => a + b, 0)} 次 · 认图 ${q.correct}/${q.total}`;
+      `今日勾选 ${checks} 项 · 十字 ${data.crossTimes.length} · F2L 计时 ${data.f2lTimes.length} · F2L 情况 ${Object.values(data.casePractice).reduce((a, b) => a + b, 0)} 次 · PLL ${pllCount} 次 · 认图 ${q.correct}/${q.total}`;
   }
 
   document.getElementById("btn-export-copy").addEventListener("click", async () => {
@@ -829,6 +914,9 @@
       data.planChecks = Object.assign({}, incoming.planChecks, data.planChecks);
       for (const [k, v] of Object.entries(incoming.casePractice || {})) {
         data.casePractice[k] = (data.casePractice[k] || 0) + v;
+      }
+      for (const [k, v] of Object.entries(incoming.pllPractice || {})) {
+        data.pllPractice[k] = (data.pllPractice[k] || 0) + v;
       }
       if (incoming.recognitionQuiz) {
         ensureQuizStats();
@@ -886,5 +974,6 @@
   renderCrossStats();
   renderF2lStats();
   renderF2lList("all");
+  renderPLLList();
   renderMe();
 })();

@@ -1,4 +1,4 @@
-const CACHE = "cube-mobile-trainer-v9";
+const CACHE = "cube-mobile-trainer-v10";
 const ASSETS = [
   "./",
   "./index.html",
@@ -12,6 +12,7 @@ const ASSETS = [
   "./lib/cross-solver.js",
   "./lib/storage.js",
   "./data/f2l-cases.js",
+  "./data/pll-cases.js",
   "./data/plans.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

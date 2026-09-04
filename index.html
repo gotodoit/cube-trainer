@@ -142,6 +142,18 @@
       </div>
     </section>
 
+    <!-- PLL -->
+    <section class="panel" id="panel-pll">
+      <div class="card">
+        <h2>PLL 图鉴 · 5 种常用公式</h2>
+        <p class="muted" style="margin-bottom:8px">
+          PLL 在 OLL 之后执行，此时顶层所有贴纸朝上（全黄），识别靠看<strong>侧面上排</strong>颜色分布。<br />
+          图示从正上方俯视：中间 3×3 是顶面（全黄），四边各 3 格是前/右/后/左面顶排。
+        </p>
+        <div id="pll-list"></div>
+      </div>
+    </section>
+
     <!-- 我的 -->
     <section class="panel" id="panel-me">
       <div class="card">
@@ -183,6 +195,7 @@
       <button type="button" class="active" data-nav="today"><span class="ico">日</span>今日</button>
       <button type="button" data-nav="cross"><span class="ico">十</span>十字</button>
       <button type="button" data-nav="f2l"><span class="ico">F</span>F2L</button>
+      <button type="button" data-nav="pll"><span class="ico">P</span>PLL</button>
       <button type="button" data-nav="me"><span class="ico">我</span>我的</button>
     </nav>
   </div>
@@ -218,6 +231,7 @@
   <script src="lib/cross-solver.js"></script>
   <script src="lib/storage.js"></script>
   <script src="data/f2l-cases.js"></script>
+  <script src="data/pll-cases.js"></script>
   <script src="data/plans.js"></script>
   <script src="app.js"></script>
   <script>
