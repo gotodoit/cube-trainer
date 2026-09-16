@@ -401,7 +401,7 @@
     for (const g of groups) {
       const meta = F2LData.GROUP_META[g];
       html += `<div class="group-head">${meta.title}</div>`;
-      html += `<div class="group-decision">认组：${meta.decision}</div>`;
+      html += `<div class="group-decision">怎么认：${meta.decision}</div>`;
       html += `<div class="group-blurb">${meta.blurb}</div>`;
       for (const c of grouped[g] || []) {
         const count = data.casePractice[c.id] || 0;
