@@ -17,7 +17,7 @@
   <div id="app">
     <header class="topbar">
       <h1>魔方训练</h1>
-      <div class="sub" id="top-sub">十字 + F2L 全套 · 数据仅存本机</div>
+      <div class="sub" id="top-sub">十字 + F2L 对照练习 · 数据仅存本机</div>
     </header>
 
     <!-- 今日 -->
@@ -27,7 +27,7 @@
         <div class="day-select">
           <label class="muted">十字阶段日</label>
           <select id="stage-day"></select>
-          <label class="muted">F2L 日</label>
+          <label class="muted">对照日</label>
           <select id="f2l-day"></select>
         </div>
         <p class="muted" id="today-labels"></p>
@@ -109,7 +109,7 @@
       </div>
       <div class="card">
         <h2>认图练习</h2>
-        <p class="muted">只看图，先选<strong>第几组</strong>，再选<strong>哪一种</strong>。练闭卷认情况。</p>
+        <p class="muted">可选，不必每天打卡。今日计划以「两种画面对照」为主；这里留给想做选择题的时候用。</p>
         <div class="quiz-stats" id="quiz-stats">今日 — / 累计 —</div>
         <div class="filter-bar" id="quiz-group-filter"></div>
         <div class="quiz-mode">
@@ -128,7 +128,7 @@
       </div>
       <div class="card">
         <h2>F2L 图鉴 · 组 1–12（41 例）</h2>
-        <details class="decision-details">
+        <details class="decision-details" id="f2l-guide">
           <summary>实战决策树：看位置决定第一步（点开展开）</summary>
           <div id="f2l-decision-tree"></div>
         </details>

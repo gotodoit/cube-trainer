@@ -1,4 +1,4 @@
-const CACHE = "cube-mobile-trainer-v12";
+const CACHE = "cube-mobile-trainer-v13";
 const ASSETS = [
   "./",
   "./index.html",

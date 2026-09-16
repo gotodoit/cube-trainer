@@ -50,11 +50,16 @@
     for (let i = 1; i <= 7; i++) {
       sd.innerHTML += `<option value="${i}">Day ${i}</option>`;
     }
-    for (let i = 1; i <= 14; i++) {
+    for (let i = 1; i <= 7; i++) {
       fd.innerHTML += `<option value="${i}">Day ${i}</option>`;
     }
     sd.value = String(data.stageDay || 1);
-    fd.value = String(data.f2lDay || 1);
+    const clamped = PlanData.clampF2lDay(data.f2lDay || 1);
+    if (clamped !== data.f2lDay) {
+      data.f2lDay = clamped;
+      persist();
+    }
+    fd.value = String(clamped);
     sd.addEventListener("change", () => {
       data.stageDay = parseInt(sd.value, 10);
       persist();
@@ -82,7 +87,7 @@
             <div><span class="pill">${t.section}</span><span class="title">${t.title}</span></div>
             <div class="detail">${t.detail}</div>
           </div>
-          <button type="button" class="go" data-go="${t.go}" data-groups="${(t.groups || []).join(",")}" ${t.scrollQuiz ? 'data-scroll-quiz="1"' : ""}>去练</button>
+          <button type="button" class="go" data-go="${t.go}" data-groups="${(t.groups || []).join(",")}" ${t.scrollAtlas ? 'data-scroll-atlas="1"' : ""}>去练</button>
         </div>`;
       })
       .join("");
@@ -107,19 +112,24 @@
           });
         } else if (go === "f2l" || go === "f2l-timer" || go === "f2l-quiz") {
           const g = btn.getAttribute("data-groups");
-          if (g) {
+          if (g != null) {
             const gs = g.split(",").map((x) => parseInt(x, 10)).filter(Boolean);
-            if (gs.length) {
-              currentGroupFilter = gs.length === 1 ? gs[0] : "all";
-              quizGroupFilter = gs;
-            }
+            currentGroupFilter = gs.length === 1 ? gs[0] : "all";
+            if (gs.length) quizGroupFilter = gs;
           }
           showPanel("f2l");
           if (go === "f2l-timer") {
             document.getElementById("f2l-start").scrollIntoView({ behavior: "smooth", block: "center" });
           }
-          if (go === "f2l-quiz" || btn.hasAttribute("data-scroll-quiz")) {
+          if (go === "f2l-quiz") {
             document.getElementById("quiz-next").scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+          if (btn.hasAttribute("data-scroll-atlas")) {
+            const guide = document.getElementById("f2l-guide");
+            if (guide) {
+              guide.open = true;
+              guide.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
           }
         } else {
           showPanel(go);

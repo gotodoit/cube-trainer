@@ -56,6 +56,15 @@ const sexyTask = PlanData.CROSS_DAYS["3-4"].tasks.find(
 assert.equal(fingerTask.go, "finger", "手法 5 分钟应跳到手法练习区");
 assert.equal(sexyTask.go, "finger", "Sexy 连做应跳到手法练习区");
 
+const todayPlan = PlanData.buildToday(1, 1);
+assert.equal(todayPlan.tasks.filter((t) => t.go === "f2l-quiz").length, 0, "今日计划不再布置认图选择题");
+assert.ok(
+  todayPlan.tasks.some((t) => t.id.startsWith("f2l-contrast-")),
+  "今日计划应包含易混对照"
+);
+assert.equal(PlanData.F2L_CONTRAST.length, 7, "对照日应为 7 天循环");
+assert.equal(PlanData.F2L_FOCUS_LEGACY.length, 14, "旧按组计划应保留备用");
+
 // ── PLL 校验 ──
 const pllCases = PLLData.getCases();
 assert.equal(pllCases.length, 5, "应包含 5 种 PLL");
